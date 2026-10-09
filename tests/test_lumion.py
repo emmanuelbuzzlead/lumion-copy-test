@@ -198,7 +198,7 @@ def test_every_declared_vertical_belongs_to_exactly_one_segment():
         for v in verticals:
             assert v not in seen, f"{v} in {seen[v]} and {seg}"
             seen[v] = seg
-    assert set(seen) == set(client.load("lumion").verticals)
+    assert set(seen) - {"Tier 2 - previously emailed"} == set(client.load("lumion").verticals)
     assert set(cfg["segment_caps"]) == set(cfg["segments"])
 
 

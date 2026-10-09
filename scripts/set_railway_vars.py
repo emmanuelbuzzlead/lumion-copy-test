@@ -17,6 +17,8 @@ from pathlib import Path
 
 ENV = Path("C:/Claude_Code_GTM_Training/.env")
 SERVICE = "lumion-web"
+if "--service" in __import__("sys").argv:
+    SERVICE = __import__("sys").argv[__import__("sys").argv.index("--service") + 1]
 PUBLIC_URL = "https://lumion-web-production.up.railway.app"
 
 # Copied from the root .env, by name.
@@ -34,10 +36,11 @@ FIXED = {
     "CLIENT": "lumion",
     "DATABASE_URL": "${{Postgres.DATABASE_URL}}",
     "PUBLIC_URL": PUBLIC_URL,
-    "PIPELINE_ENABLED": "false",
+    "PIPELINE_ENABLED": "true",     # the kill switch; the guards below keep the proof phase small and unable to send
     "BUZZLEAD_ENABLED": "false",
     "AUTO_START_CAMPAIGNS": "false",
     "SKIP_SENDER_ATTACH": "true",
+    "POOL_REFILL_ENABLED": "false",   # new-company sourcing deferred until asked for
 }
 
 

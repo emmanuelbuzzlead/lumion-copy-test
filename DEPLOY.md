@@ -28,7 +28,9 @@ Decide SKIP_SENDER_ATTACH: unset means the push attaches free sender accounts it
     railway up --service lumion-web --detach
 A deploy kills a run in flight. Edit locally, deploy between runs.
 
+## Slack, done 2026-10-09
+App "Vertical Expander (Lumion)", command /lumion, bot in private channel #lumion-expander. Signed tests: valid signature 200, wrong
+secret 401, garbage 401, stale timestamp 401. A test message posted to the channel. SLACK_BOT_TOKEN and SLACK_SIGNING_SECRET are set on lumion-web.
+
 ## Not set up yet
-- Slack: create the app from slack/lumion-app-manifest.yaml, put LUMION_SLACK_BOT_TOKEN and LUMION_SLACK_SIGNING_SECRET in the root
-  .env, run `python scripts/set_railway_vars.py --slack`, invite the bot to the channel, then the signed status test.
-- UPLOAD_TOKEN (only needed for the CSV upload endpoints), scheduled services (weekly run, reply stopping, daily review), PIPELINE_ENABLED=true.
+UPLOAD_TOKEN (only for the CSV upload endpoints), scheduled services (weekly run, reply stopping, daily review), PIPELINE_ENABLED=true, the first run.

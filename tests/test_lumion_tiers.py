@@ -242,3 +242,71 @@ def test_hours_buried_deep_in_a_long_page_survive_the_trim():
     long = "intro line about the school. " * 400 + "\nOffice hours: Monday to Friday 8am to 5pm\n" + "more filler text here. " * 50
     out = jina._signal_trim(long, 1000, 600)
     assert "Office hours: Monday to Friday 8am to 5pm" in out and len(out) < 2200
+
+
+# --------------------------------------------------------------------------- loading: refused leads are never counted as loaded
+
+from app.clients import emailbison as eb  # noqa: E402
+from app import scaling  # noqa: E402
+
+
+def _fake_eb(monkeypatch, busy_ids):
+    attached = []
+
+    def send(method, path, payload=None, *a, **k):
+        if path.endswith("/multiple"):
+            return {"data": [{"id": 100 + i, "email": l["email"]} for i, l in enumerate(payload["leads"])]}
+        if path.endswith("/attach-leads"):
+            attached.extend(payload["lead_ids"])
+            return {"data": {"success": True}}
+        return {}
+
+    def get(path, params=None):
+        lid = int(path.rsplit("/", 1)[1])
+        camps = [{"campaign_id": 999, "status": "in_sequence"}] if lid in busy_ids else [{"campaign_id": 5, "status": "stopped"}]
+        return {"data": {"id": lid, "lead_campaign_data": camps}}
+
+    monkeypatch.setattr(eb, "_send_retry", send)
+    monkeypatch.setattr(eb, "_get", get)
+    monkeypatch.setattr(eb, "ensure_custom_variables", lambda names: None)
+    monkeypatch.setattr(eb, "_lead_for_upsert", lambda c: {"email": c["email"], "custom_variables": []})
+    return attached
+
+
+def test_a_lead_already_in_another_active_sequence_is_not_attached_and_is_reported(monkeypatch):
+    attached = _fake_eb(monkeypatch, busy_ids={101})
+    res = eb.push_leads(2030, [{"email": "a@x.edu"}, {"email": "b@x.edu"}, {"email": "c@x.edu"}], dry_run=False)
+    assert attached == [100, 102]
+    assert res["refused"] == {"b@x.edu": [999]} and res["attached"] == 2
+
+
+def test_a_stopped_or_finished_lead_elsewhere_is_fine(monkeypatch):
+    attached = _fake_eb(monkeypatch, busy_ids=set())
+    res = eb.push_leads(2030, [{"email": "a@x.edu"}, {"email": "b@x.edu"}], dry_run=False)
+    assert attached == [100, 101] and res["refused"] == {}
+
+
+def test_load_leads_returns_only_the_leads_that_were_really_attached(monkeypatch):
+    calls = {"updates": []}
+
+    class Cur:
+        def executemany(self, sql, rows):
+            calls["updates"].append((sql.split()[1], list(rows)))
+
+        def execute(self, sql, params=None):
+            calls["updates"].append((sql.split()[1], [params]))
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    monkeypatch.setattr(scaling.db, "cursor", lambda: Cur())
+    monkeypatch.setattr(scaling.db, "log", lambda *a, **k: None)
+    monkeypatch.setattr(scaling.emailbison, "push_leads",
+                        lambda cid, rows, dry_run=False, on_upserted=None: {"refused": {"b@x.edu": [999]}})
+    rows = [{"email": "a@x.edu"}, {"email": "b@x.edu"}]
+    assert [r["email"] for r in scaling.load_leads(2030, rows, "run1")] == ["a@x.edu"]
+    flagged = [r for kind, rr in calls["updates"] for r in rr if "another active" in str(r)]
+    assert flagged, "the refused lead must be put back to needs_review with the reason"

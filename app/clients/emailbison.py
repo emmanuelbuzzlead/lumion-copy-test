@@ -298,15 +298,43 @@ def push_leads(campaign_id: int, contacts: Iterable[dict], dry_run: bool = True,
                 except Exception as exc:  # progress is best effort, never fatal
                     print(f"[emailbison] progress not recorded: {exc}", flush=True)
 
+        # EmailBison refuses to attach a lead that is already "in sequence" in ANOTHER campaign, and in a mixed batch it skips
+        # those silently (found 2026-10-09: 9 of 45 leads were marked pushed but were never in the campaign). Check each lead's
+        # other campaigns first, attach only the ones that can be attached, and tell the caller who was refused.
+        email_by_id = {v: k for k, v in _last_id_map.items()}
+        refused: dict[str, list[int]] = {}
+
+        def _busy(lid: int) -> tuple[int, list[int]]:
+            try:
+                d = (_get(f"/api/leads/{lid}") or {}).get("data") or {}
+            except Exception:
+                return lid, []
+            return lid, [int(x["campaign_id"]) for x in (d.get("lead_campaign_data") or [])
+                         if str(x.get("status")).lower() == "in_sequence" and x.get("campaign_id") is not None
+                         and int(x["campaign_id"]) != int(campaign_id)]
+
+        from concurrent.futures import ThreadPoolExecutor as _Pool
+        with _Pool(max_workers=8) as _pool:
+            for lid, camps in _pool.map(_busy, lead_ids):
+                if camps:
+                    refused[email_by_id.get(lid, str(lid))] = camps
+        eligible_ids = [lid for lid in lead_ids if email_by_id.get(lid, str(lid)) not in refused]
+
         attached = 0
-        for i in range(0, len(lead_ids), ATTACH_BATCH):
-            chunk = lead_ids[i:i + ATTACH_BATCH]
-            _send_retry("POST", f"/api/campaigns/{campaign_id}/leads/attach-leads",
-                        {"lead_ids": chunk})
-            attached += len(chunk)
+        for i in range(0, len(eligible_ids), ATTACH_BATCH):
+            chunk = eligible_ids[i:i + ATTACH_BATCH]
+            try:
+                _send_retry("POST", f"/api/campaigns/{campaign_id}/leads/attach-leads", {"lead_ids": chunk})
+                attached += len(chunk)
+            except VendorError as exc:
+                if exc.status == 422 and "No leads were added" in str(exc):
+                    for lid in chunk:      # every lead in the chunk was refused (bounced, unsubscribed, or in a sequence)
+                        refused.setdefault(email_by_id.get(lid, str(lid)), [])
+                    continue
+                raise
             if on_attached:
                 try:
-                    on_attached([c["email"] for c in contacts[i:i + ATTACH_BATCH]])
+                    on_attached([email_by_id[lid] for lid in chunk if lid in email_by_id])
                 except Exception as exc:
                     print(f"[emailbison] progress not recorded: {exc}", flush=True)
     except VendorError as exc:
@@ -319,7 +347,7 @@ def push_leads(campaign_id: int, contacts: Iterable[dict], dry_run: bool = True,
     id_by_email = dict(_last_id_map)
 
     return {"dry_run": False, "campaign_id": campaign_id, "lead_count": len(leads),
-            "attached": attached, "lead_ids": lead_ids, "id_by_email": id_by_email}
+            "attached": attached, "lead_ids": lead_ids, "id_by_email": id_by_email, "refused": refused}
 
 
 def remove_leads(campaign_id: int, lead_ids: list[int]) -> int:

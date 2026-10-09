@@ -128,11 +128,15 @@ def sweep(angles: dict, campaign_of: dict, run_id: str) -> dict:
     pulled = {}
     for a, cid in campaign_of.items():
         bad, page = [], 1
+        present: set[str] = set()
+        complete = False
         while page < 1000:
             rows = (emailbison._get(f"/api/campaigns/{cid}/leads", {"page": page}) or {}).get("data") or []
             if not rows:
+                complete = True
                 break
             for lead in rows:
+                present.add((lead.get("email") or "").lower())
                 cv = {str(c.get("name")).lower(): c.get("value") for c in (lead.get("custom_variables") or [])}
                 if not passes(angles[a], lead.get("first_name"), cv.get("personalization 1") or "",
                               cv.get("personalization 2") or ""):
@@ -144,8 +148,18 @@ def sweep(angles: dict, campaign_of: dict, run_id: str) -> dict:
                 cur.executemany("""UPDATE contacts SET status='needs_review', eb_campaign_id=NULL,
                                    drop_reason='failed current copy rules on read-back' WHERE email=%s""",
                                 [((l.get("email") or "").lower(),) for l in bad])
-        pulled[a] = len(bad)
-        db.log(run_id, "wave1_fill", f"sweep {a}: pulled {len(bad)}")
+        ghosts = 0
+        if complete:
+            # The database must not claim a lead EmailBison does not hold (found 2026-10-09: 9 of 45 were recorded as loaded but were
+            # never in the campaign). Put such contacts back so the fill counts the real campaign.
+            with db.cursor() as cur:
+                cur.execute("""UPDATE contacts SET status='needs_review', eb_campaign_id=NULL,
+                               drop_reason='recorded as loaded but not present in the EmailBison campaign'
+                               WHERE eb_campaign_id=%s AND status='pushed' AND NOT (lower(email) = ANY(%s))""",
+                            (cid, list(present) or [""]))
+                ghosts = cur.rowcount
+        pulled[a] = len(bad) + ghosts
+        db.log(run_id, "wave1_fill", f"sweep {a}: pulled {len(bad)}, {ghosts} recorded-but-absent put back")
     return pulled
 
 

@@ -120,18 +120,36 @@ def load_leads(campaign_id: int, rows: list[dict], run_id: str) -> list[dict]:
     tag, so every lead this function has ever loaded was invisible to both.
     """
     loaded: list[dict] = []
+
+    def _accepted(res: dict, chunk: list[dict]) -> list[dict]:
+        """Leads EmailBison would not attach (in another active sequence, bounced, unsubscribed) are NOT loaded. They go back to
+        needs_review with the reason, so the fill counts only what is really in the campaign."""
+        refused = {k.lower(): v for k, v in ((res or {}).get("refused") or {}).items()}
+        ok = [r for r in chunk if (r.get("email") or "").lower() not in refused]
+        bad = [r for r in chunk if (r.get("email") or "").lower() in refused]
+        if bad:
+            def why(r: dict) -> str:
+                camps = refused[(r.get("email") or "").lower()]
+                return ("not loaded: already in another active EmailBison sequence (campaigns " + str(camps) + ")"
+                        if camps else "not loaded: EmailBison refused it (bounced or unsubscribed)")
+            with db.cursor() as cur:
+                cur.executemany("UPDATE contacts SET status='needs_review', eb_campaign_id=NULL, drop_reason=%s WHERE email=%s",
+                                [(why(r), r["email"]) for r in bad])
+            db.log(run_id, "load_leads", f"{len(bad)} of {len(chunk)} leads refused by EmailBison for campaign {campaign_id}")
+        return ok
+
     for i in range(0, len(rows), 50):
         chunk = rows[i:i + 50]
         try:
-            emailbison.push_leads(campaign_id, chunk, dry_run=False, on_upserted=db.record_lead_ids)
-            loaded += chunk
+            res = emailbison.push_leads(campaign_id, chunk, dry_run=False, on_upserted=db.record_lead_ids)
+            loaded += _accepted(res, chunk)
             continue
         except Exception:
             pass
         for r in chunk:
             try:
-                emailbison.push_leads(campaign_id, [r], dry_run=False, on_upserted=db.record_lead_ids)
-                loaded.append(r)
+                res = emailbison.push_leads(campaign_id, [r], dry_run=False, on_upserted=db.record_lead_ids)
+                loaded += _accepted(res, [r])
             except Exception as exc:
                 with db.cursor() as cur:
                     cur.execute("UPDATE contacts SET status='needs_review', drop_reason=%s WHERE email=%s",

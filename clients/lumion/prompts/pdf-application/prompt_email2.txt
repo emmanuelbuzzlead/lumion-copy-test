@@ -21,9 +21,9 @@ Paragraph 2 (two sentences): when the only way to apply is a PDF or a phone call
 Paragraph 3 (up to three sentences): Lumion swaps the paper path for a mobile application that saves progress, texts a reminder to anyone who stops partway, and drops every finished application into your admissions queue. Payment plans sit inside the same flow, so a student can pick one before they close the tab.
 Paragraph 4: the proof line then the CTA, exactly as THE E2 CLOSE says.
 
-THE E2 CLOSE (the last paragraph of Email 2). Read SIMILAR_SCHOOL in the research.
-If it is a school name: one short proof sentence naming only that school, such as "{SIMILAR_SCHOOL} uses Lumion for enrollment." or "{SIMILAR_SCHOOL} works with Lumion.",
-then the question "Want me to send over what their first 30 days looked like?"
+THE E2 CLOSE (the last paragraph of Email 2). Read SIMILAR_TYPE in the research.
+If it is a school type: one short proof sentence that names only the type, such as "A similar {SIMILAR_TYPE} uses Lumion for enrollment." or
+"A similar {SIMILAR_TYPE} works with Lumion.", then the question "Want me to send over what their first 30 days looked like?"
 If it is NONE: no proof sentence, only: "Want me to send over what the first 30 days looked like for a school doing your volume?" 
 
 GOOD EXAMPLE:
@@ -33,7 +33,7 @@ When the only way to apply is a PDF, the students who quit halfway never show up
 
 Lumion swaps that PDF for a mobile application that saves progress, texts a reminder to anyone who stops partway, and drops every finished application into your admissions queue. Payment plans sit inside the same flow, so a student can pick one before they close the tab.
 
-Berry Best Phlebotomy uses Lumion for enrollment. Want me to send over what their first 30 days looked like?
+A similar healthcare school uses Lumion for enrollment. Want me to send over what their first 30 days looked like?
 
 HOW LUMION FILLS SEATS. The mechanism lines for this angle. Use one per email, plus the second only where the structure above shows it. Never claim anything about Lumion beyond these lines.
 - Students quit mid application (VERIFY): "Lumion turns your application into a mobile form students can finish from their phone in one sitting."
@@ -43,9 +43,8 @@ BUYER LANGUAGE. Buyers are light blue collar school owners and admissions leads.
 in plain words, money and seats, no software vocabulary. Phrases that sound like them: "fill your seats", "open seats", "next start", "inquiries",
 "say yes on the spot", "call them back", "text them back", "your front desk", "after hours", "start date", "tuition", "payment plan".
 
-APPROVED CASE STUDIES (names only, never numbers): Hoosier Trade School, Arclabs Welding,
-Savant Aesthetics Institute, CDL Training of Tampa, Dasmesh Truck Driving School, Berry Best Phlebotomy,
-Tripleten, Coding Temple, Iron Circle, Sanders Flight Training Center, Train For The Crane, RiseAero, FlexAir.
+CASE STUDIES: Lumion has approved customer schools, but NEVER name any school in an email (Emmanuel, 2026-10-09). Refer to a similar school by
+type only, for example "a similar healthcare school" or "a similar bootcamp". No numbers, ever.
 
 HARD CONSTRAINTS:
 - Output ONLY the email body. No subject, greeting, name, signature, commentary, code fences,
@@ -76,7 +75,8 @@ CLIENT SPECIFIC BANS:
 - No loss framing such as "stop losing". Describe the outcome that becomes possible.
 - No competitor names.
 - Never claim a feature beyond the copy lines in this prompt. Anything marked VERIFY stays in the wording given here.
-- Exactly one CTA, the similar-school question or its fallback.
+- Never name a school or a customer. Refer to a similar school by type only.
+- Exactly one CTA, the similar-school-type question or its fallback.
 - Retired jargon: platform, solution, ecosystem, seamless, AI-powered, end-to-end, funnel optimization.
 
 OUTPUT. The email body only, plain text, blank line between paragraphs, no labels such as Path A. Check silently before finishing: length window,

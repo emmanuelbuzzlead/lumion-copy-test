@@ -154,7 +154,7 @@ def _violations(text, arm="after-5pm"):
 
 GOOD = ("Your Google listing says the office at Acme Welding closes at 5.\n\n"
         "Lumion answers those calls in your school's voice and books a real callback.\n\n"
-        "Want me to send over what the first 30 days looked like for Arclabs Welding?")
+        "Want me to send over what the first 30 days looked like for a similar welding school?")
 
 
 def test_a_clean_email_passes_the_client_rules():
@@ -169,7 +169,7 @@ def test_a_clean_email_passes_the_client_rules():
     GOOD.replace("Lumion answers", "Unlike HubSpot, Lumion answers"),
     GOOD.replace("Lumion answers", "Our platform answers"),
     "Most schools miss calls after 5.\n\n" + GOOD.split("\n\n", 1)[1],
-    GOOD.replace("first 30 days looked like for Arclabs Welding?", "first 30 days looked like for Arclabs Welding."),
+    GOOD.replace("for a similar welding school?", "for a similar welding school."),
     "Hi there: " + GOOD,
 ])
 def test_client_bans_catch_what_the_spec_forbids(bad):
@@ -223,7 +223,7 @@ def test_school_map_covers_every_vertical_and_names_only_allowed_schools():
     assert all(v["status"] in allowed for v in m["verticals"].values())
     for vertical in client.load("lumion").verticals:
         assert vertical in m["_engine_vertical_to_map_key"], vertical
-    assert "{similar_school}" in m["cta_template"] and "first 30 days" in m["fallback_cta"]
+    assert "{similar_type}" in m["cta_template"] and "first 30 days" in m["fallback_cta"]
 
 
 def test_proof_schools_are_never_prospects():
@@ -232,3 +232,15 @@ def test_proof_schools_are_never_prospects():
     for v in m["verticals"].values():
         if v["status"] == "approved":
             assert v["school"].lower() in dnc, v["school"]
+
+
+@pytest.mark.parametrize("name", ["Berry Best Phlebotomy", "Arclabs Welding", "Tripleten", "Savant Aesthetics Institute", "Hoosier Trade School", "Iron Circle"])
+def test_an_email_that_names_a_customer_school_is_rejected(name):
+    bad = GOOD.replace("a similar welding school", name)
+    assert any("never name a customer school" in v for v in _violations(bad)), name
+
+
+def test_the_cta_must_refer_to_a_type_or_to_your_volume():
+    assert any("similar school type" in v for v in _violations("Short note.\n\nWant me to send over what the first 30 days looked like for them?"))
+    assert not any("similar school type" in v for v in _violations(
+        "Short note.\n\nWant me to send over what the first 30 days looked like for a school doing your volume?"))

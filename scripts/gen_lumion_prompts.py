@@ -44,32 +44,29 @@ CLIENT_BANS = """CLIENT SPECIFIC BANS:
 - No loss framing such as "stop losing". Describe the outcome that becomes possible.
 - No competitor names.
 - Never claim a feature beyond the copy lines in this prompt. Anything marked VERIFY stays in the wording given here.
-- Exactly one CTA, the similar-school question or its fallback.
+- Never name a school or a customer. Refer to a similar school by type only.
+- Exactly one CTA, the similar-school-type question or its fallback.
 - Retired jargon: platform, solution, ecosystem, seamless, AI-powered, end-to-end, funnel optimization."""
 
-APPROVED_SCHOOLS = """APPROVED CASE STUDIES (names only, never numbers): Hoosier Trade School, Arclabs Welding,
-Savant Aesthetics Institute, CDL Training of Tampa, Dasmesh Truck Driving School, Berry Best Phlebotomy,
-Tripleten, Coding Temple, Iron Circle, Sanders Flight Training Center, Train For The Crane, RiseAero, FlexAir."""
+APPROVED_SCHOOLS = """CASE STUDIES: Lumion has approved customer schools, but NEVER name any school in an email (Emmanuel, 2026-10-09). Refer to a similar school by
+type only, for example "a similar healthcare school" or "a similar bootcamp". No numbers, ever."""
 
-SCHOOL_MAP = """SIMILAR SCHOOL MAP. Pick by the prospect's own vertical. Only status approved or closest may be named.
-Unapproved or unknown means NONE.
-- coding or tech bootcamp: Tripleten (approved)
-- cyber security training: Iron Circle (approved)
-- dental assisting: Berry Best Phlebotomy (closest)
-- other healthcare vocational: Berry Best Phlebotomy (approved)
-- welding, NDT, pipe welding: Arclabs Welding (approved)
-- HVAC, plumbing, electrical: Hoosier Trade School (approved)
-- massage therapy: Savant Aesthetics Institute (closest)
-- cosmetology: Savant Aesthetics Institute (approved)
-- barbering: Savant Aesthetics Institute (closest)
-- tattoo or body art: Savant Aesthetics Institute (closest)
-- CDL or truck driving: CDL Training of Tampa (approved)
-- heavy equipment or crane: Train For The Crane (approved)
-- lineman, maritime, commercial diving: Train For The Crane (closest)
-- flight or aviation: RiseAero (approved, but flight is shelved)
-- mechatronics: NONE (unapproved)
-- beauty, aesthetics, wellness or yoga training: Savant Aesthetics Institute (closest)
-- general multi trade school or any other vertical: NONE"""
+SCHOOL_MAP = """SIMILAR SCHOOL TYPE MAP. Pick by the prospect's own vertical. The type is what the email says, never a school name.
+Only a vertical where Lumion has a real customer gets a type. Anything else is NONE.
+- coding or tech bootcamp: bootcamp
+- cyber security training: cybersecurity bootcamp
+- dental assisting: healthcare school
+- other healthcare, medical or vocational health training: healthcare school
+- welding, NDT, pipe welding: welding school
+- HVAC, plumbing, electrical: trade school
+- massage therapy, aesthetics, wellness or yoga training: aesthetics school
+- cosmetology, barbering, beauty, tattoo or body art: beauty school
+- CDL or truck driving: CDL school
+- heavy equipment or crane: heavy equipment school
+- lineman, maritime, commercial diving: trade school
+- flight or aviation: flight school
+- general multi trade school: trade school
+- mechatronics, corporate training, or any other vertical: NONE"""
 
 LINE_TEXT = {
     "capture": 'Visitors leave without reaching out: Lumion catches every visitor who shows interest on your site and starts the conversation by text in minutes.',
@@ -95,9 +92,9 @@ in plain words, money and seats, no software vocabulary. Phrases that sound like
 SENDER = """You are Drew Jones at Lumion, writing a cold email to the owner or admissions lead of a private school or training provider. Casual founder voice,
 one person writing to another. Lumion is an enrollment tool built for private schools, career colleges and training providers."""
 
-CTA = """THE ONE CTA. When SIMILAR_SCHOOL in the research is a school name, end with exactly this question and name only that school:
-"Want me to send over what the first 30 days looked like for {SIMILAR_SCHOOL}?"
-When SIMILAR_SCHOOL is NONE, end with this fallback verbatim:
+CTA = """THE ONE CTA. Read SIMILAR_TYPE in the research. When it is a school type, end with exactly this question, using the type as given:
+"Want me to send over what the first 30 days looked like for a similar {SIMILAR_TYPE}?"
+When SIMILAR_TYPE is NONE, end with this fallback verbatim:
 "Want me to send over what the first 30 days looked like for a school doing your volume?" """
 
 RESEARCH_COMMON = """You research one private school for Lumion, an enrollment tool for private trade schools and career colleges, and you write a short
@@ -117,7 +114,7 @@ VERTICAL: the ONE vertical from the map above this school belongs in, or other
 PROGRAMS: the main programs by name, from the site
 ICP_GATE: PASS or FAIL, then one short reason
 icp_fit: HIGH, MEDIUM, LOW or NOT_FIT
-SIMILAR_SCHOOL: the school name from the map for this vertical, or NONE
+SIMILAR_TYPE: the school type from the map for this vertical, or NONE
 {signal_fields}
 OPENER_FACT: one plain sentence naming the signal exactly as found on the site, or NONE FOUND
 SUMMARY: two plain sentences on what the school teaches and who it serves"""
@@ -163,14 +160,14 @@ Noticed the enrollment application on Gulf Coast Dental Institute's site is a PD
 
 Someone applying to a dental assisting program is usually filling it out on their phone at 10pm. Lumion turns your application into a mobile form that saves their progress and texts them to finish, so more inquiries become enrolled students.
 
-Want me to send over what the first 30 days looked like for Berry Best Phlebotomy?
+Want me to send over what the first 30 days looked like for a similar healthcare school?
 
 GOOD EXAMPLE (Path B):
 People weighing a barbering program usually decide late at night, on their phone, with the application half done. A lot of them never come back to finish it.
 
 Lumion turns an application into a mobile form that saves their progress and texts them to finish, so more inquiries become enrolled students.
 
-Want me to send over what the first 30 days looked like for Savant Aesthetics Institute?""",
+Want me to send over what the first 30 days looked like for a similar beauty school?""",
         "e1_bad": """BAD EXAMPLE (failure: claims a PDF the research never found, uses a dash and pitches features):
 Your PDF application - it's costing you students. Our platform optimizes your funnel with seamless mobile forms and 40% more completions.
 Fails because the PDF was not found on the site, a dash and loss framing are banned, platform and optimize are banned, and numbers are banned.""",
@@ -186,7 +183,7 @@ When the only way to apply is a PDF, the students who quit halfway never show up
 
 Lumion swaps that PDF for a mobile application that saves progress, texts a reminder to anyone who stops partway, and drops every finished application into your admissions queue. Payment plans sit inside the same flow, so a student can pick one before they close the tab.
 
-Berry Best Phlebotomy uses Lumion for enrollment. Want me to send over what their first 30 days looked like?""",
+A similar healthcare school uses Lumion for enrollment. Want me to send over what their first 30 days looked like?""",
     },
     "after-5pm": {
         "title": "After 5PM",
@@ -204,14 +201,14 @@ Your Google listing says the office at Lone Star Welding Academy closes at 5.
 
 People looking at a welding program usually work a full shift and call on the way back from the job site. Lumion answers those calls in your school's voice, books a real callback, and texts the application while they're still on the line, so the call turns into a start date.
 
-Want me to send over what the first 30 days looked like for Arclabs Welding?
+Want me to send over what the first 30 days looked like for a similar welding school?
 
 GOOD EXAMPLE (Path B):
 Someone looking at an HVAC program is usually on a job site all day and calls once they're off the clock. Nobody wants to leave a voicemail at that hour.
 
 Lumion answers those calls in your school's voice, books a real callback, and texts the application while they're still on the line, so the call turns into a start date.
 
-Want me to send over what the first 30 days looked like for Hoosier Trade School?""",
+Want me to send over what the first 30 days looked like for a similar trade school?""",
         "e1_bad": """BAD EXAMPLE (failure: states hours the research never found, loss framing, jargon):
 Your office closes at 5 so you're losing students every night. Our AI-powered platform leverages voice technology to streamline your calls.
 Fails because the hours were not found, stop losing style framing is banned, AI-powered, platform, leverages and streamline are banned.""",
@@ -227,7 +224,7 @@ Someone who calls a welding school at 7pm and hits voicemail rarely leaves a mes
 
 Lumion's phone agent answers every call in your school's voice, books a real callback, and texts the caller your application before they hang up. It remembers earlier texts, forms and calls from the same person, so nobody repeats themselves. Your team starts the morning with booked callbacks instead of missed calls.
 
-Arclabs Welding works with Lumion. Want me to send over what their first 30 days looked like?""",
+A similar welding school works with Lumion. Want me to send over what their first 30 days looked like?""",
     },
     "next-start-date": {
         "title": "Next Start Date",
@@ -245,14 +242,14 @@ Saw the next HVAC class at Piedmont Trade Institute starts January 12.
 
 Schools usually have a pile of inquiries from the last 90 days that nobody reached twice. Lumion texts every one of them and puts payment plans right in the enrollment flow, so students say yes on the spot and fill the seats you still have.
 
-Want me to send over what the first 30 days looked like for Hoosier Trade School?
+Want me to send over what the first 30 days looked like for a similar trade school?
 
 GOOD EXAMPLE (Path B):
 Every barbering class has a start date, and the open seats before it are the ones worth chasing.
 
 Schools usually have a pile of inquiries from the last 90 days that nobody reached twice. Lumion texts every one of them and puts payment plans right in the enrollment flow, so students say yes on the spot and fill the seats you still have.
 
-Want me to send over what the first 30 days looked like for Savant Aesthetics Institute?""",
+Want me to send over what the first 30 days looked like for a similar beauty school?""",
         "e1_bad": """BAD EXAMPLE (failure: a date that already passed or was never found, pricing, numbers):
 Your class starts soon, and with our low monthly fee you can fill 20 more seats. Don't miss out.
 Fails because no date was found, fee and numbers are banned, and urgency pressure is not the voice.""",
@@ -268,13 +265,13 @@ The quickest seats to fill belong to people who already asked about the program.
 
 Lumion texts every inquiry from the last 90 days about the January 12 start and keeps following up until they apply or say no. When tuition is the holdup, payment plans sit right inside the enrollment flow so they can say yes on the spot.
 
-Hoosier Trade School runs on Lumion. Want me to send over what their first 30 days looked like?""",
+A similar trade school runs on Lumion. Want me to send over what their first 30 days looked like?""",
     },
 }
 
-E2_CLOSE = """THE E2 CLOSE (the last paragraph of Email 2). Read SIMILAR_SCHOOL in the research.
-If it is a school name: one short proof sentence naming only that school, such as "{SIMILAR_SCHOOL} uses Lumion for enrollment." or "{SIMILAR_SCHOOL} works with Lumion.",
-then the question "Want me to send over what their first 30 days looked like?"
+E2_CLOSE = """THE E2 CLOSE (the last paragraph of Email 2). Read SIMILAR_TYPE in the research.
+If it is a school type: one short proof sentence that names only the type, such as "A similar {SIMILAR_TYPE} uses Lumion for enrollment." or
+"A similar {SIMILAR_TYPE} works with Lumion.", then the question "Want me to send over what their first 30 days looked like?"
 If it is NONE: no proof sentence, only: "Want me to send over what the first 30 days looked like for a school doing your volume?" """
 
 OUTPUT_RULES_E = """OUTPUT. The email body only, plain text, blank line between paragraphs, no labels such as Path A. Check silently before finishing: length window,
@@ -309,7 +306,7 @@ def email1_file(variant: str) -> str:
 
 THE BET FOR THIS ANGLE ({a['title']}): {a['bet']}
 
-You are given a research brief. Read the signal lines and SIMILAR_SCHOOL, then write Email 1 on the path that fits. Write the signal exactly as the research found
+You are given a research brief. Read the signal lines and SIMILAR_TYPE, then write Email 1 on the path that fits. Write the signal exactly as the research found
 it. If the research says none_found, use Path B and never state or imply the school has that signal.
 
 STRUCTURE, three short paragraphs separated by a blank line, about 100, 220 and 90 characters. Email 1 total 380 to 460 characters.

@@ -14,25 +14,22 @@ too big (a large university or college system, over about 200 employees); defunc
 Everything else passes: online or in person, any program length or tuition, union and apprenticeship centers, beauty, aesthetics and yoga
 schools, bootcamps, corporate and continuing education providers.
 
-SIMILAR SCHOOL MAP. Pick by the prospect's own vertical. Only status approved or closest may be named.
-Unapproved or unknown means NONE.
-- coding or tech bootcamp: Tripleten (approved)
-- cyber security training: Iron Circle (approved)
-- dental assisting: Berry Best Phlebotomy (closest)
-- other healthcare vocational: Berry Best Phlebotomy (approved)
-- welding, NDT, pipe welding: Arclabs Welding (approved)
-- HVAC, plumbing, electrical: Hoosier Trade School (approved)
-- massage therapy: Savant Aesthetics Institute (closest)
-- cosmetology: Savant Aesthetics Institute (approved)
-- barbering: Savant Aesthetics Institute (closest)
-- tattoo or body art: Savant Aesthetics Institute (closest)
-- CDL or truck driving: CDL Training of Tampa (approved)
-- heavy equipment or crane: Train For The Crane (approved)
-- lineman, maritime, commercial diving: Train For The Crane (closest)
-- flight or aviation: RiseAero (approved, but flight is shelved)
-- mechatronics: NONE (unapproved)
-- beauty, aesthetics, wellness or yoga training: Savant Aesthetics Institute (closest)
-- general multi trade school or any other vertical: NONE
+SIMILAR SCHOOL TYPE MAP. Pick by the prospect's own vertical. The type is what the email says, never a school name.
+Only a vertical where Lumion has a real customer gets a type. Anything else is NONE.
+- coding or tech bootcamp: bootcamp
+- cyber security training: cybersecurity bootcamp
+- dental assisting: healthcare school
+- other healthcare, medical or vocational health training: healthcare school
+- welding, NDT, pipe welding: welding school
+- HVAC, plumbing, electrical: trade school
+- massage therapy, aesthetics, wellness or yoga training: aesthetics school
+- cosmetology, barbering, beauty, tattoo or body art: beauty school
+- CDL or truck driving: CDL school
+- heavy equipment or crane: heavy equipment school
+- lineman, maritime, commercial diving: trade school
+- flight or aviation: flight school
+- general multi trade school: trade school
+- mechatronics, corporate training, or any other vertical: NONE
 
 OUTPUT FORMAT. Plain labeled lines in exactly this order, nothing before or after:
 SCHOOL: name and city or state
@@ -40,7 +37,7 @@ VERTICAL: the ONE vertical from the map above this school belongs in, or other
 PROGRAMS: the main programs by name, from the site
 ICP_GATE: PASS or FAIL, then one short reason
 icp_fit: HIGH, MEDIUM, LOW or NOT_FIT
-SIMILAR_SCHOOL: the school name from the map for this vertical, or NONE
+SIMILAR_TYPE: the school type from the map for this vertical, or NONE
 SIGNAL_NEXT_START_DATE: YYYY-MM-DD of the next published start or cohort date that is after today's date (given in the user message), or none_found
 SIGNAL_PROGRAM_NAME: the program that date belongs to, or none_found
 OPENER_FACT: one plain sentence naming the signal exactly as found on the site, or NONE FOUND

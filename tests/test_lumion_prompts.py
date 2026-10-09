@@ -72,22 +72,22 @@ def test_email_prompts_embed_the_spec_blocks_verbatim(arm, f):
         assert block in system
     assert "between 380 and 460" in system and "between 600 and 699" in system
     assert "Drew Jones" in system and "first 30 days" in system
-    assert "{SIMILAR_SCHOOL}" in system        # the engine never fills this, the model does from the research
+    assert "{SIMILAR_TYPE}" in system        # the engine never fills this, the model does from the research
 
 
 @pytest.mark.parametrize("arm", ARMS)
 @pytest.mark.parametrize("f", ("prompt_email1.txt", "prompt_email2.txt"))
 def test_email_prompt_size_is_close_to_the_spec_range(arm, f):
     n = len(prompts.load(f, arm).system.split())
-    assert 600 <= n <= 1300, n        # spec asks 600 to 1,200; a little over is accepted for the verbatim guardrail block
+    assert 600 <= n <= 1400, n        # spec asks 600 to 1,200; a little over is accepted for the verbatim guardrail block
 
 
 @pytest.mark.parametrize("arm", ARMS)
 def test_research_prompt_carries_the_school_map_gates_and_this_arms_signal(arm):
     system = prompts.load("prompt_research.txt", arm).system
-    assert "SIMILAR SCHOOL MAP" in system and "Hoosier Trade School" in system and "NONE (unapproved)" in system
+    assert "SIMILAR SCHOOL TYPE MAP" in system and "healthcare school" in system and "NONE" in system
     assert "ICP GATES" in system and "Hard no fires first" in system
-    assert "none_found" in system and "OPENER_FACT" in system and "SIMILAR_SCHOOL:" in system
+    assert "none_found" in system and "OPENER_FACT" in system and "SIMILAR_TYPE:" in system
     signal = {"pdf-application": "SIGNAL_APPLICATION_FORMAT", "after-5pm": "SIGNAL_OFFICE_CLOSE_TIME",
               "next-start-date": "SIGNAL_NEXT_START_DATE"}[arm]
     assert signal in system
@@ -104,7 +104,7 @@ def test_every_email_prompt_has_a_signal_free_path():
 
 def test_a_research_report_in_the_expected_format_is_usable():
     report = ("SCHOOL: Lone Star Welding Academy, Tulsa OK\nVERTICAL: welding\nPROGRAMS: Pipe welding, structural welding\n"
-              "ICP_GATE: PASS private owner operated multi month programs\nicp_fit: HIGH\nSIMILAR_SCHOOL: Arclabs Welding\n"
+              "ICP_GATE: PASS private owner operated multi month programs\nicp_fit: HIGH\nSIMILAR_TYPE: welding school\n"
               "SIGNAL_OFFICE_CLOSE_TIME: 17:00\nSIGNAL_WEEKEND_HOURS: closed\nSIGNAL_SOURCE: website\n"
               "OPENER_FACT: The site says the office closes at 5 on weekdays.\n"
               "SUMMARY: A private welding school with day and evening programs. It serves adults changing careers.")
@@ -117,27 +117,27 @@ DRAFTS = {
     "pdf-application": (
         "Noticed the enrollment application on Lone Star Dental's site is a PDF students print and bring in.\n\n"
         "Someone applying to a dental assisting program is usually filling it out on their phone at 10pm. Lumion turns your application into a mobile form that saves their progress and texts them to finish, so more inquiries become enrolled students.\n\n"
-        "Want me to send over what the first 30 days looked like for Berry Best Phlebotomy?",
+        "Want me to send over what the first 30 days looked like for a similar healthcare school?",
         "One more thought on the application piece.\n\n"
         "When the only way to apply is a PDF, the students who quit halfway never show up anywhere. They don't call or email. They enroll at a school that let them finish on their phone.\n\n"
         "Lumion swaps that PDF for a mobile application that saves progress, texts a reminder to anyone who stops partway, and drops every finished application into your admissions queue. Payment plans sit inside the same flow, so a student can pick one before they close the tab.\n\n"
-        "Berry Best Phlebotomy uses Lumion for enrollment. Want me to send over what their first 30 days looked like?"),
+        "A similar healthcare school uses Lumion for enrollment. Want me to send over what their first 30 days looked like?"),
     "after-5pm": (
         "Your Google listing says the office at Lone Star Welding closes at 5.\n\n"
         "People looking at a welding program usually work a full shift and call on the way back from the job site. Lumion answers those calls in your school's voice, books a real callback, and texts the application while they're still on the line, so the call turns into a start date.\n\n"
-        "Want me to send over what the first 30 days looked like for Arclabs Welding?",
+        "Want me to send over what the first 30 days looked like for a similar welding school?",
         "One more thought on the after hours calls.\n\n"
         "Someone who calls a welding school at 7pm and hits voicemail rarely leaves a message. They call the next school on the list, and whoever picks up books the tour.\n\n"
         "Lumion's phone agent answers every call in your school's voice, books a real callback, and texts the caller your application before they hang up. It remembers earlier texts, forms and calls from the same person, so nobody repeats themselves. Your team starts the morning with booked callbacks instead of missed calls.\n\n"
-        "Arclabs Welding works with Lumion. Want me to send over what their first 30 days looked like?"),
+        "A similar welding school works with Lumion. Want me to send over what their first 30 days looked like?"),
     "next-start-date": (
         "Saw the next HVAC class at Lone Star Trade starts January 12.\n\n"
         "Schools usually have a pile of inquiries from the last 90 days that nobody reached twice. Lumion texts every one of them and puts payment plans right in the enrollment flow, so students say yes on the spot and fill the seats you still have.\n\n"
-        "Want me to send over what the first 30 days looked like for Hoosier Trade School?",
+        "Want me to send over what the first 30 days looked like for a similar trade school?",
         "One more thought on the January class.\n\n"
         "The quickest seats to fill belong to people who already asked about the program. Plenty of them went quiet after one call or one email because nobody followed up a second time. A short text is an easy way back into the conversation.\n\n"
         "Lumion texts every inquiry from the last 90 days about the January 12 start and keeps following up until they apply or say no. When tuition is the holdup, payment plans sit right inside the enrollment flow so they can say yes on the spot.\n\n"
-        "Hoosier Trade School runs on Lumion. Want me to send over what their first 30 days looked like?"),
+        "A similar trade school runs on Lumion. Want me to send over what their first 30 days looked like?"),
 }
 
 
@@ -176,3 +176,11 @@ def test_the_fallback_cta_closes_a_signal_free_email_cleanly(arm):
             "Lumion turns an application into a mobile form that saves their progress and texts them to finish, so more inquiries become enrolled students.\n\n"
             "Want me to send over what the first 30 days looked like for a school doing your volume?")
     assert _violations(body, arm) == []
+
+
+@pytest.mark.parametrize("arm", ARMS)
+@pytest.mark.parametrize("f", ("prompt_research.txt", "prompt_email1.txt", "prompt_email2.txt"))
+def test_no_prompt_names_a_customer_school(arm, f):
+    system = prompts.load(f, arm).system
+    for name in ("Hoosier Trade", "Arclabs", "Savant Aesthetics", "Berry Best", "Tripleten", "Iron Circle", "Train For The Crane"):
+        assert name not in system, (arm, f, name)

@@ -424,9 +424,14 @@ def generate(contact: dict, run_id: str) -> tuple[dict | None, str]:
 
     from .. import company_fit as _company_fit
     _fit = _company_fit.verdict(contact.get("company_domain") or "")
-    if _fit in ("LOW", "NOT_FIT"):
+    _reused_unchecked = (not _prof.reuse_fit_check) and contact.get("vertical") == "Tier 2 - previously emailed"
+    if _fit in ("LOW", "NOT_FIT") and not _reused_unchecked:
         return None, f"not a fit (company check: {_fit})"
     _fit_ok = _fit in _company_fit.PASS and not _prof.research_fit_gate
+    # A reused (previously contacted) company is not fit-checked when the client turned that off, so the research brief must not
+    # reject it either: treat it as confirmed. (wave1_fill tags these with this vertical label.)
+    if _reused_unchecked:
+        _fit_ok = True
     try:
         # Troy, 2026-09-27: the company fit check (Sonnet) is THE gate. The haiku research brief
         # rejected ~60% of companies that check passed, clear fits included (Zonex, Instagrid),

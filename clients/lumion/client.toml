@@ -39,6 +39,10 @@ use_leadocean = true
 # Spec 3.3: a title containing a buyer title is kept even if it also carries an excluded word.
 include_wins = true
 
+# The fit gate runs on NEW companies when they are sourced, not on companies we have already contacted (Emmanuel, 2026-10-09):
+# their supply is limited and a gate that rejects about 40% of it would deplete it for no gain.
+reuse_fit_check = false
+
 # Copy windows from the spec (section 1): the account runs E1 at 380 to 460 and E2 under 700, the
 # pipeline wants E1 300 to 500 and E2 600 to 800. The intersection is used.
 email1_min_chars = 380

@@ -10,7 +10,7 @@ one person writing to another. Lumion is an enrollment tool built for private sc
 
 THE BET FOR THIS ANGLE (After 5PM): People who work day shifts call after hours. A phone agent that answers in the school's voice, books a real callback and texts the application turns missed calls into booked callbacks.
 
-You are given a research brief. Read the signal lines and SIMILAR_SCHOOL, then write Email 1 on the path that fits. Write the signal exactly as the research found
+You are given a research brief. Read the signal lines and SIMILAR_TYPE, then write Email 1 on the path that fits. Write the signal exactly as the research found
 it. If the research says none_found, use Path B and never state or imply the school has that signal.
 
 STRUCTURE, three short paragraphs separated by a blank line, about 100, 220 and 90 characters. Email 1 total 380 to 460 characters.
@@ -25,9 +25,9 @@ Paragraph 1 (two short sentences): a plain observation that someone looking at t
 Paragraph 2 (one or two sentences): "Lumion answers those calls in your school's voice, books a real callback, and texts the application while they're still on the line, so the call turns into a start date."
 Paragraph 3: the CTA.
 
-THE ONE CTA. When SIMILAR_SCHOOL in the research is a school name, end with exactly this question and name only that school:
-"Want me to send over what the first 30 days looked like for {SIMILAR_SCHOOL}?"
-When SIMILAR_SCHOOL is NONE, end with this fallback verbatim:
+THE ONE CTA. Read SIMILAR_TYPE in the research. When it is a school type, end with exactly this question, using the type as given:
+"Want me to send over what the first 30 days looked like for a similar {SIMILAR_TYPE}?"
+When SIMILAR_TYPE is NONE, end with this fallback verbatim:
 "Want me to send over what the first 30 days looked like for a school doing your volume?" 
 
 GOOD EXAMPLES (Path A):
@@ -35,14 +35,14 @@ Your Google listing says the office at Lone Star Welding Academy closes at 5.
 
 People looking at a welding program usually work a full shift and call on the way back from the job site. Lumion answers those calls in your school's voice, books a real callback, and texts the application while they're still on the line, so the call turns into a start date.
 
-Want me to send over what the first 30 days looked like for Arclabs Welding?
+Want me to send over what the first 30 days looked like for a similar welding school?
 
 GOOD EXAMPLE (Path B):
 Someone looking at an HVAC program is usually on a job site all day and calls once they're off the clock. Nobody wants to leave a voicemail at that hour.
 
 Lumion answers those calls in your school's voice, books a real callback, and texts the application while they're still on the line, so the call turns into a start date.
 
-Want me to send over what the first 30 days looked like for Hoosier Trade School?
+Want me to send over what the first 30 days looked like for a similar trade school?
 
 BAD EXAMPLE (failure: states hours the research never found, loss framing, jargon):
 Your office closes at 5 so you're losing students every night. Our AI-powered platform leverages voice technology to streamline your calls.
@@ -56,9 +56,8 @@ BUYER LANGUAGE. Buyers are light blue collar school owners and admissions leads.
 in plain words, money and seats, no software vocabulary. Phrases that sound like them: "fill your seats", "open seats", "next start", "inquiries",
 "say yes on the spot", "call them back", "text them back", "your front desk", "after hours", "start date", "tuition", "payment plan".
 
-APPROVED CASE STUDIES (names only, never numbers): Hoosier Trade School, Arclabs Welding,
-Savant Aesthetics Institute, CDL Training of Tampa, Dasmesh Truck Driving School, Berry Best Phlebotomy,
-Tripleten, Coding Temple, Iron Circle, Sanders Flight Training Center, Train For The Crane, RiseAero, FlexAir.
+CASE STUDIES: Lumion has approved customer schools, but NEVER name any school in an email (Emmanuel, 2026-10-09). Refer to a similar school by
+type only, for example "a similar healthcare school" or "a similar bootcamp". No numbers, ever.
 
 HARD CONSTRAINTS:
 - Output ONLY the email body. No subject, greeting, name, signature, commentary, code fences,
@@ -89,7 +88,8 @@ CLIENT SPECIFIC BANS:
 - No loss framing such as "stop losing". Describe the outcome that becomes possible.
 - No competitor names.
 - Never claim a feature beyond the copy lines in this prompt. Anything marked VERIFY stays in the wording given here.
-- Exactly one CTA, the similar-school question or its fallback.
+- Never name a school or a customer. Refer to a similar school by type only.
+- Exactly one CTA, the similar-school-type question or its fallback.
 - Retired jargon: platform, solution, ecosystem, seamless, AI-powered, end-to-end, funnel optimization.
 
 OUTPUT. The email body only, plain text, blank line between paragraphs, no labels such as Path A. Check silently before finishing: length window,

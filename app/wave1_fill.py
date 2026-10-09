@@ -34,6 +34,11 @@ def _name() -> str:
     return client.profile().display_name
 
 
+def _reuse_fit_check() -> bool:
+    from . import client
+    return bool(client.profile().reuse_fit_check)
+
+
 def _guess_unlabeled() -> bool:
     from . import client
     return client.profile().name == "productevo"
@@ -166,6 +171,8 @@ def fit_check_unjudged_reuse_companies(recontact_days: int, run_id: str, batch_s
     tick (same company_fit.check() the rest of this file already uses, same cost
     profile) so that pool keeps opening up over time instead of sitting unjudged forever.
     """
+    if not _reuse_fit_check():
+        return 0
     from . import company_fit
     company_fit.ensure_columns()
     with db.cursor() as cur:
@@ -200,6 +207,8 @@ def fit_check_unjudged_reuse_companies(recontact_days: int, run_id: str, batch_s
 
 def fit_filter(batch: list[dict], run_id: str) -> list[dict]:
     """Keep only contacts whose company passes the website fit check."""
+    if not _reuse_fit_check():
+        return batch
     from . import company_fit
     doms = sorted({c["company_domain"] for c in batch})
     _unstamp(doms)
@@ -212,6 +221,8 @@ def fit_filter(batch: list[dict], run_id: str) -> list[dict]:
 
 def fit_sweep(campaign_of: dict, run_id: str) -> int:
     """Re-judge loaded tier-2 companies that were stamped fit without a check; pull failures."""
+    if not _reuse_fit_check():
+        return 0
     from . import company_fit
     company_fit.ensure_columns()
     with db.cursor() as cur:

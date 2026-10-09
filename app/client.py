@@ -129,6 +129,9 @@ class Profile:
     # True: a title that CONTAINS one of the declared buyer titles (whole words, any order) is a buyer even when it
     # also carries an excluded-persona word. Lumion spec 3.3: "Owner / Lead Instructor" must survive "instructor".
     include_wins: bool = False
+    # False: previously contacted (reused) companies are NOT fit-checked. Their supply is limited and already known, so the gate runs only
+    # on NEW companies at sourcing time (Emmanuel, 2026-10-09). ProductEVO keeps the default True.
+    reuse_fit_check: bool = True
 
     def prompts_for(self, variant: str | None = None) -> Path:
         """The prompt set for a copy variant, or the client's default set."""
@@ -423,6 +426,7 @@ def load(name: str | None = None) -> Profile:
         email1_min_chars=cfg.get("email1_min_chars"),
         email2_min_chars=cfg.get("email2_min_chars"),
         include_wins=bool(cfg.get("include_wins", False)),
+        reuse_fit_check=bool(cfg.get("reuse_fit_check", True)),
     )
 
 

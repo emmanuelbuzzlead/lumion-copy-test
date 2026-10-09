@@ -18,12 +18,13 @@ Products and the one line each may use in copy (one mechanism line per email, ne
 - Payments: "Lumion puts payment plans directly into your admissions flow so students see options
   instantly and say yes on the spot."
 
-Proof: school names only, never numbers. Approved to name: Hoosier Trade School, Arclabs Welding,
+Proof: never numbers, and never a school name in an email (Emmanuel, 2026-10-09). Customers for reference only: Hoosier Trade School, Arclabs Welding,
 Savant Aesthetics Institute, CDL Training of Tampa, Dasmesh Truck Driving School, Berry Best Phlebotomy,
 Tripleten, Coding Temple, Iron Circle, Train For The Crane, RiseAero, FlexAir. The vertical to school map
 is school-map.json. Unapproved or missing verticals use the fallback question.
 
-CTA, exactly one per email: "Want me to send over what the first 30 days looked like for {similar_school}?"
+CTA, exactly one per email: "Want me to send over what the first 30 days looked like for a similar {school type}?" (for example a similar healthcare
+school or a similar bootcamp). Never name a school.
 Fallback: "Want me to send over what the first 30 days looked like for a school doing your volume?"
 
 Never: pricing (deflect to a call), case study numbers, competitor names, loss framing such as "stop

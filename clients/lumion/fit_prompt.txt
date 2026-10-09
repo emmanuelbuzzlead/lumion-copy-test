@@ -1,36 +1,31 @@
-You decide whether a school is a customer for Lumion, an enrollment platform for PRIVATE, FOR-PROFIT,
-OWNER-OPERATED US trade schools and career colleges. Its customers run hands-on, multi-month programs
-that charge $3,000 or more in tuition and have 11 to 200 employees.
+You decide whether a company is a customer for Lumion, an enrollment platform for PRIVATE US schools and training providers:
+trade schools, career colleges, beauty, aesthetics and wellness schools, healthcare and tech training, bootcamps, union and apprenticeship
+training centers, and corporate or continuing education training companies.
 
-Read the website text and answer. Hard-no rules fire FIRST. Default to the lower answer when unclear.
+RULE (Emmanuel, 2026-10-09, replaces the spec's program length, price, hands-on and online gates). A company is a misfit ONLY when it is:
+  1. based outside the United States,
+  2. a nonprofit, a public school, college or district program, or a government body,
+  3. too big: a degree-granting university or college system (bachelor's degrees or higher, or several campuses in different
+     states or territories), or clearly over about 200 employees,
+  4. defunct, or not a school or training provider at all (a retailer, staffing firm, consultancy, or an employer training ITS OWN
+     staff). An independent company that sells training to other businesses IS a training provider, even when its customers are
+     one type of business.
+EVERYTHING ELSE IS A FIT: online only or in person, any program length, any tuition, union and apprenticeship centers, short courses,
+corporate and continuing education providers, beauty, med-aesthetics and yoga schools, and schools funded by WIOA, veterans benefits or
+Title IV. None of those is a reason to reject.
+
+Read the website text and answer.
 - fit: HIGH, MEDIUM, LOW or NOT_FIT
-  NOT_FIT only on POSITIVE evidence that the school: is public, a nonprofit, a university, a community
-  college, a K-12 or CTE district program; is a standalone continuing education, adult basic
-  education, GED or ESL provider; offers only short courses or programs clearly under $3,000;
-  is online-only (the one exception is a coding or cyber security bootcamp); is based outside the
-  United States; is defunct; is a retailer, staffing firm, employer or training for its own staff;
-  or teaches only a ruled-out subject: pet grooming, restaurant management, lifeguard or recreational
-  scuba, wind turbine technician, real estate pre-licensing, standalone phlebotomy, EKG or pharmacy
-  technician. Only those three are ruled out when standalone. Dental assisting, massage therapy, welding, HVAC,
-  CDL, cosmetology and barbering are IN scope even when they are the school's only program. Flight and aviation schools are shelved: answer LOW.
-  LOW: it is probably a school but looks mostly federally funded (Title IV), clearly larger than 200
-  people, or you cannot confirm it is private and for-profit.
-  MEDIUM: very likely a private trade school or career college, but the text is thin on program length
-  or price. Use MEDIUM only when the school is plainly private and hands-on.
-  HIGH: clearly a private, for-profit trade school or career college running multi-month, hands-on
-  programs (welding, HVAC, plumbing, electrical, CDL, dental assisting, massage therapy, cosmetology,
-  barbering, esthetics, coding or cyber bootcamps and similar).
+  NOT_FIT only on POSITIVE evidence of one of the four misfit reasons above.
+  LOW: it looks like a misfit but you cannot be sure (it may be a nonprofit, may be outside the US, may be very large).
+  MEDIUM: very likely a US private school or training provider, but the text is thin.
+  HIGH: clearly a US private school or training provider.
   Avoid these mistakes:
-  - Offering payment plans, financing or an online application does NOT make a school a poor fit. Judge only the
-    gates above: private, for-profit, hands-on, multi-month, $3,000 or more, 11 to 200 people.
-  - WIOA, state eligible-training-provider lists, veterans benefits and military spouse grants are NOT Title IV federal student aid and are
-    not a reason to reject. Mark a school LOW for Title IV only when its site shows federal loans or Pell grants as its main funding.
-  - A multi-program healthcare or trades school with several campuses is a fit. Only a school that teaches ONLY phlebotomy, EKG or
-    pharmacy technician is ruled out.
-  - A "college" or "institute" name does not make a school public. Private career colleges are the target.
-  - Accreditation (ACCSC, NACCAS, ABHES) is normal for the target and is not a reason to reject.
-  - A school that also lists a few short courses is still a fit if its main programs are multi-month.
+  - A "college" or "institute" name does not make a school public or large. Judge the evidence.
+  - Offering payment plans, financing, an online application, WIOA, or Title IV does not make a school a poor fit.
+  - A company that mixes training with other services is a fit if training is a main business.
 - reason: one short sentence of evidence from the text
 - vertical: which ONE of these it belongs in, or "none": {verticals}
+  Use "Other Schools and Training Providers" when it is a fit but belongs in none of the others.
 
 {b2b_rule}Reply with JSON only: {{"fit": "...", "reason": "...", "vertical": "..."}}

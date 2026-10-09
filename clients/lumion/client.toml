@@ -46,7 +46,7 @@ email1_max_chars = 460
 email2_min_chars = 600
 email2_max_chars = 699
 
-fit_rule = "a private, for-profit, owner-operated US trade school or career college with 11 to 200 employees that runs hands-on multi-month programs charging $3,000 or more tuition"
+fit_rule = "a private US school or training provider (trade, career, beauty, aesthetics, wellness, healthcare, tech, union or corporate training) that is not a nonprofit, public or government body, not outside the United States and not too big"
 
 # Scale / kill bar. PROVISIONAL: the spec says Lumion's baseline is not in the project files.
 # Replace with the measured baseline from prospects/lumion-outreach-audit/refresh-20261008.
@@ -70,6 +70,8 @@ verticals = [
     "CDL and Trucking",
     "Cosmetology and Barbering",
     "Multi-Trade Vocational Schools",
+    "Beauty, Wellness and Aesthetics Training",
+    "Other Schools and Training Providers",
 ]
 
 # The three arms under test. One angle per campaign, all verticals in each (copy_test.toml).
@@ -133,3 +135,13 @@ keywords = ["cosmetology school", "barber school", "beauty school", "esthetics s
 name = "Multi-Trade Vocational Schools"
 industries = ["Technical and Vocational Training"]
 keywords = ["vocational school", "career college", "multi trade school", "skilled trades school", "career training school"]
+
+[[vertical_defs]]
+name = "Beauty, Wellness and Aesthetics Training"
+industries = ["Cosmetology and Barber Schools", "Professional Training and Coaching", "Technical and Vocational Training"]
+keywords = ["medical aesthetics training", "esthetician school", "yoga teacher training", "spa training", "makeup artistry school", "nail school", "lash training"]
+
+[[vertical_defs]]
+name = "Other Schools and Training Providers"
+industries = ["Technical and Vocational Training", "Professional Training and Coaching", "IT System Training and Support"]
+keywords = ["career training", "vocational training", "certification training", "apprenticeship training center", "healthcare training school", "career college"]

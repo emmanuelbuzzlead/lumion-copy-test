@@ -1,18 +1,15 @@
-Private, for-profit, owner-operated US trade schools and career colleges with one location or a
-small chain, 11 to 200 employees and about $600K to $1.2M or more in revenue, running multi-month
-hands-on programs of $3,000 or more tuition. Admissions are manual and students cannot pay in
-installments. Online coding and cyber security bootcamps are the one approved online exception.
+Private US schools and training providers of any kind (Emmanuel, 2026-10-09). Online or in person, any program length or
+tuition, any funding. Trade and career schools, beauty, aesthetics and wellness schools, healthcare and tech training, bootcamps,
+union and apprenticeship centers, and corporate or continuing education providers all count.
 
-Buyer: the owner or operator is almost always the final decision-maker. At larger schools the
-admissions, enrollment and finance leaders buy too. Titles are in titles.txt.
+The only misfits: outside the United States, nonprofit or public or government, too big (a large university or college system, or
+over about 200 employees), defunct, or not a school or training provider at all.
 
-Sourcing: schools are found by industry label (Technical and Vocational Training, Cosmetology and Barber
-Schools, Professional Training and Coaching, IT System Training and Support) and then judged one by one
-on their website against exclusions.md. Industry labels alone return community colleges and universities,
-so the website check is not optional. Pilot states from the spec: TX, FL, CA, OH, GA.
+Buyer: the owner or operator is usually the final decision-maker. At larger schools the admissions, enrollment and finance leaders buy
+too. Titles are in titles.txt.
 
-Verticals are listed in client.toml in Lumion's own win-rate priority order (spec section 2).
-Caveat kept visible: the win rates may be biased toward Lumion's referral network and are not
-ACV weighted (VERIFY-9).
+Sourcing: companies are found by industry label and then judged one by one on their website with fit_prompt.txt. Verticals are in
+client.toml in Lumion's own win-rate priority order, with two added catch-alls for beauty and wellness and for everything else.
+The spec's tuition, program length, hands-on and online gates (LUMION-SPEC.md section 2) are NOT used.
 
-Source: LUMION-SPEC.md sections 1 and 2.
+Source: LUMION-SPEC.md sections 1 and 2, as overridden by Emmanuel on 2026-10-09.

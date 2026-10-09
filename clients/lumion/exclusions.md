@@ -1,21 +1,15 @@
-Target: private, for-profit, owner-operated US trade schools and career colleges, one location or a
-small chain, 11 to 200 employees, running hands-on multi-month programs of $3,000 or more tuition.
-Source: LUMION-SPEC.md section 2 (Onboarding Form, engagement-evolution.md section 4).
+Target (Emmanuel, 2026-10-09, replaces the spec's section 2 gates): private US schools and training providers of any kind,
+online or in person, any program length or tuition, including trade and career schools, beauty, aesthetics and wellness schools,
+healthcare and tech training, bootcamps, union and apprenticeship centers, and corporate or continuing education providers.
 
-Hard no, any one of these removes the company. Hard-no fires before any yes. Default to No when unclear.
-Excluded: public schools, nonprofits, universities, community colleges, K-12 and CTE district programs.
-Excluded: fewer than 11 or more than 200 employees.
-Excluded: revenue over about $5M, or clearly under $500K.
-Excluded: programs under $3,000, short courses, continuing education, adult basic education, GED and ESL.
-Excluded: schools that depend mostly on Title IV funding.
-Excluded: online-only schools. The one exception is coding and cyber security bootcamps.
-Excluded: employer-paid enrollment.
-Excluded: non-US schools.
-Ruled out verticals: pet grooming, adult basic education, continuing education, restaurant management,
-lifeguard and recreational scuba, wind turbine technician, real estate pre-licensing, standalone
-phlebotomy, EKG and pharmacy tech. Flight and aviation is shelved. Commercial diving counts as welding.
+The ONLY misfits:
+Excluded: companies based outside the United States.
+Excluded: nonprofits, public schools, colleges and districts, and government bodies.
+Excluded: companies that are too big, meaning a large university or college system, or clearly over about 200 employees.
+Excluded: defunct companies, and companies that are not a school or training provider at all (retailers, staffing firms, consultancies,
+employers training their own staff).
 Excluded: Lumion's own customers and the named proof schools (see do_not_contact.txt).
-Not excluded: Office Manager is not a target title but is a referral path at 11 to 20 person schools.
+Not excluded: Office Manager is not a target title but is a referral path at small schools.
 
 Matching rule: words below match whole words only, never inside another word. A title that contains one of
 the buyer titles in titles.txt is kept even if it also contains a word below ("Owner / Lead Instructor").

@@ -4,22 +4,86 @@
   "fallback_cta": "Want me to send over what the first 30 days looked like for a school doing your volume?",
   "cta_template": "Want me to send over what the first 30 days looked like for {similar_school}?",
   "verticals": {
-    "coding_tech": {"school": "Tripleten", "alt": "Coding Temple", "status": "approved"},
-    "cyber_security": {"school": "Iron Circle", "alt": null, "status": "approved"},
-    "dental_assisting": {"school": "Berry Best Phlebotomy", "alt": null, "status": "closest"},
-    "healthcare_vocational": {"school": "Berry Best Phlebotomy", "alt": null, "status": "approved"},
-    "welding_ndt": {"school": "Arclabs Welding", "alt": null, "status": "approved"},
-    "hvac_plumbing_electrical": {"school": "Hoosier Trade School", "alt": null, "status": "approved"},
-    "massage_therapy": {"school": "Savant Aesthetics Institute", "alt": null, "status": "closest"},
-    "cosmetology": {"school": "Savant Aesthetics Institute", "alt": null, "status": "approved"},
-    "barbering": {"school": "Savant Aesthetics Institute", "alt": null, "status": "closest"},
-    "tattoo_body_art": {"school": "Savant Aesthetics Institute", "alt": null, "status": "closest"},
-    "cdl_trucking": {"school": "CDL Training of Tampa", "alt": "Dasmesh Truck Driving School", "status": "approved"},
-    "heavy_equipment_crane": {"school": "Train For The Crane", "alt": null, "status": "approved"},
-    "lineman_maritime_diving": {"school": "Train For The Crane", "alt": null, "status": "closest"},
-    "flight_aviation_shelved": {"school": "RiseAero", "alt": "FlexAir", "status": "approved"},
-    "mechatronics": {"school": "Mach 1 Mechatronics", "alt": null, "status": "unapproved"},
-    "new_school": {"school": "Elite Career Institute", "alt": null, "status": "unapproved"}
+    "coding_tech": {
+      "school": "Tripleten",
+      "alt": "Coding Temple",
+      "status": "approved"
+    },
+    "cyber_security": {
+      "school": "Iron Circle",
+      "alt": null,
+      "status": "approved"
+    },
+    "dental_assisting": {
+      "school": "Berry Best Phlebotomy",
+      "alt": null,
+      "status": "closest"
+    },
+    "healthcare_vocational": {
+      "school": "Berry Best Phlebotomy",
+      "alt": null,
+      "status": "approved"
+    },
+    "welding_ndt": {
+      "school": "Arclabs Welding",
+      "alt": null,
+      "status": "approved"
+    },
+    "hvac_plumbing_electrical": {
+      "school": "Hoosier Trade School",
+      "alt": null,
+      "status": "approved"
+    },
+    "massage_therapy": {
+      "school": "Savant Aesthetics Institute",
+      "alt": null,
+      "status": "closest"
+    },
+    "cosmetology": {
+      "school": "Savant Aesthetics Institute",
+      "alt": null,
+      "status": "approved"
+    },
+    "barbering": {
+      "school": "Savant Aesthetics Institute",
+      "alt": null,
+      "status": "closest"
+    },
+    "tattoo_body_art": {
+      "school": "Savant Aesthetics Institute",
+      "alt": null,
+      "status": "closest"
+    },
+    "cdl_trucking": {
+      "school": "CDL Training of Tampa",
+      "alt": "Dasmesh Truck Driving School",
+      "status": "approved"
+    },
+    "heavy_equipment_crane": {
+      "school": "Train For The Crane",
+      "alt": null,
+      "status": "approved"
+    },
+    "lineman_maritime_diving": {
+      "school": "Train For The Crane",
+      "alt": null,
+      "status": "closest"
+    },
+    "flight_aviation_shelved": {
+      "school": "RiseAero",
+      "alt": "FlexAir",
+      "status": "approved"
+    },
+    "mechatronics": {
+      "school": "Mach 1 Mechatronics",
+      "alt": null,
+      "status": "unapproved"
+    },
+    "new_school": {
+      "school": "Elite Career Institute",
+      "alt": null,
+      "status": "unapproved"
+    }
   },
   "_engine_vertical_to_map_key": {
     "Coding and Tech Bootcamps": "coding_tech",
@@ -30,6 +94,8 @@
     "Massage Therapy": "massage_therapy",
     "CDL and Trucking": "cdl_trucking",
     "Cosmetology and Barbering": "cosmetology",
-    "Multi-Trade Vocational Schools": null
+    "Multi-Trade Vocational Schools": null,
+    "Beauty, Wellness and Aesthetics Training": "cosmetology",
+    "Other Schools and Training Providers": null
   }
 }

@@ -68,6 +68,7 @@ Unapproved or unknown means NONE.
 - lineman, maritime, commercial diving: Train For The Crane (closest)
 - flight or aviation: RiseAero (approved, but flight is shelved)
 - mechatronics: NONE (unapproved)
+- beauty, aesthetics, wellness or yoga training: Savant Aesthetics Institute (closest)
 - general multi trade school or any other vertical: NONE"""
 
 LINE_TEXT = {
@@ -91,8 +92,8 @@ BUYER_LANGUAGE = """BUYER LANGUAGE. Buyers are light blue collar school owners a
 in plain words, money and seats, no software vocabulary. Phrases that sound like them: "fill your seats", "open seats", "next start", "inquiries",
 "say yes on the spot", "call them back", "text them back", "your front desk", "after hours", "start date", "tuition", "payment plan"."""
 
-SENDER = """You are Drew Jones at Lumion, writing a cold email to the owner or admissions lead of a private trade school. Casual founder voice,
-one person writing to another. Lumion is an enrollment tool built for private trade schools and career colleges."""
+SENDER = """You are Drew Jones at Lumion, writing a cold email to the owner or admissions lead of a private school or training provider. Casual founder voice,
+one person writing to another. Lumion is an enrollment tool built for private schools, career colleges and training providers."""
 
 CTA = """THE ONE CTA. When SIMILAR_SCHOOL in the research is a school name, end with exactly this question and name only that school:
 "Want me to send over what the first 30 days looked like for {SIMILAR_SCHOOL}?"
@@ -103,10 +104,10 @@ RESEARCH_COMMON = """You research one private school for Lumion, an enrollment t
 factual brief that a copywriter will use. You are given the school's website text and vendor data. Use ONLY what those contain.
 Never guess. Never use anything older than the cutoff date as a trigger. If a fact is not in the data write NONE FOUND.
 
-ICP GATES. Hard no fires first. Default to No when unclear.
-- Pass: private, for-profit, owner operated, 11 to 200 employees, hands on multi month programs, tuition of 3,000 dollars or more, not mostly Title IV funded.
-- Hard no: public, nonprofit, university, community college, K-12 or CTE district program, under 3,000 dollars, short courses, continuing education, adult basic education, GED or ESL,
-  online only (except coding and cyber bootcamps), employer paid, outside the US.
+ICP GATES (Emmanuel, 2026-10-09). Hard no fires first. The ONLY hard nos are: outside the United States; nonprofit, public or government;
+too big (a large university or college system, over about 200 employees); defunct; not a school or training provider at all.
+Everything else passes: online or in person, any program length or tuition, union and apprenticeship centers, beauty, aesthetics and yoga
+schools, bootcamps, corporate and continuing education providers.
 
 """ + SCHOOL_MAP + """
 

@@ -1,4 +1,4 @@
-SOURCE: LUMION-SPEC.md section 5 and 6.5 (angle: After 5PM), written 2026-10-08. Email 2 for this angle, 600 to 699 characters.
+SOURCE: LUMION-SPEC.md section 5 and 6.5 (angle: After 5PM), written 2026-10-08. Email 2 for this angle, 550 to 699 characters.
 VARIANT: after-5pm
 model: anthropic/claude-sonnet-4-6
 temperature: 0.7
@@ -12,7 +12,7 @@ THE BET FOR THIS ANGLE (After 5PM): People who work day shifts call after hours.
 
 You are writing Email 2, the follow up sent three days after Email 1. You are given the research brief and the Email 1 that was sent. Stay on the same path
 as Email 1: if Email 1 used the signal, you may refer to it again, and if Email 1 used the signal free opener, never introduce the signal now. Do not repeat
-any sentence from Email 1. It is the same person writing again, a bit longer, still plain and warm. Email 2 total 600 to 699 characters.
+any sentence from Email 1. It is the same person writing again, a bit longer, still plain and warm. Email 2 total 550 to 699 characters.
 
 STRUCTURE, four short paragraphs separated by a blank line.
 
@@ -65,7 +65,7 @@ HARD CONSTRAINTS:
 
 LUMION LENGTH RULES OVERRIDE THE RANGES ABOVE (the account is held to these exact windows):
 - Email 1 must be between 380 and 460 characters, spaces and line breaks included. Aim for about 420.
-- Email 2 must be between 600 and 699 characters, spaces and line breaks included. Aim for about 650.
+- Email 2 must be between 550 and 699 characters, spaces and line breaks included. Aim for about 630.
 Both numbers are enforced by a checker. An email outside its window is thrown away and rewritten.
 
 CLIENT SPECIFIC BANS:

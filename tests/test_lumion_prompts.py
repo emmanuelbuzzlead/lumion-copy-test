@@ -70,7 +70,7 @@ def test_email_prompts_embed_the_spec_blocks_verbatim(arm, f):
     system = prompts.load(f, arm).system
     for block in (gen.GUARDRAIL, gen.CLIENT_BANS, gen.APPROVED_SCHOOLS):
         assert block in system
-    assert "between 380 and 460" in system and "between 600 and 699" in system
+    assert "between 380 and 460" in system and "between 550 and 699" in system
     assert "Drew Jones" in system and "first 30 days" in system
     assert "{SIMILAR_TYPE}" in system        # the engine never fills this, the model does from the research
 
@@ -145,7 +145,7 @@ DRAFTS = {
 def test_the_spec_reference_drafts_sit_in_the_windows_and_pass_every_rule(arm):
     e1, e2 = DRAFTS[arm]
     assert 380 <= len(e1) <= 460, len(e1)
-    assert 600 <= len(e2) <= 699, len(e2)
+    assert 550 <= len(e2) <= 699, len(e2)
     assert validator.validate_email1(e1).ok, validator.validate_email1(e1).violations
     assert validator.validate_email2(e2).ok, validator.validate_email2(e2).violations
     assert _violations(e1, arm) == [] and _violations(e2, arm) == []
@@ -165,7 +165,7 @@ def test_every_good_example_inside_the_prompts_obeys_its_own_rules(arm):
         assert _violations(t, arm) == [], (arm, _violations(t, arm))
         assert validator.validate_email1(t).ok, (arm, validator.validate_email1(t).violations)
     for t in e2s:
-        assert 600 <= len(t) <= 699, (arm, len(t))
+        assert 550 <= len(t) <= 699, (arm, len(t))
         assert _violations(t, arm) == []
         assert validator.validate_email2(t).ok, (arm, validator.validate_email2(t).violations)
 

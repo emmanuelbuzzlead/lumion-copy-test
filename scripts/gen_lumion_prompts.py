@@ -34,7 +34,7 @@ GUARDRAIL = """HARD CONSTRAINTS:
 
 LENGTH_OVERRIDE = """LUMION LENGTH RULES OVERRIDE THE RANGES ABOVE (the account is held to these exact windows):
 - Email 1 must be between 380 and 460 characters, spaces and line breaks included. Aim for about 420.
-- Email 2 must be between 600 and 699 characters, spaces and line breaks included. Aim for about 650.
+- Email 2 must be between 550 and 699 characters, spaces and line breaks included. Aim for about 630.
 Both numbers are enforced by a checker. An email outside its window is thrown away and rewritten."""
 
 CLIENT_BANS = """CLIENT SPECIFIC BANS:
@@ -356,7 +356,7 @@ THE BET FOR THIS ANGLE ({a['title']}): {a['bet']}
 
 You are writing Email 2, the follow up sent three days after Email 1. You are given the research brief and the Email 1 that was sent. Stay on the same path
 as Email 1: if Email 1 used the signal, you may refer to it again, and if Email 1 used the signal free opener, never introduce the signal now. Do not repeat
-any sentence from Email 1. It is the same person writing again, a bit longer, still plain and warm. Email 2 total 600 to 699 characters.
+any sentence from Email 1. It is the same person writing again, a bit longer, still plain and warm. Email 2 total 550 to 699 characters.
 
 STRUCTURE, four short paragraphs separated by a blank line.
 
@@ -387,7 +387,7 @@ RESEARCH:
 EMAIL 1 SENT:
 {email_1_output}
 Write Email 2 now."""
-    return (header("email2", variant, EMAIL_MODEL, 0.7, 900, "Email 2 for this angle, 600 to 699 characters.")
+    return (header("email2", variant, EMAIL_MODEL, 0.7, 900, "Email 2 for this angle, 550 to 699 characters.")
             + "SYSTEM PROMPT (verbatim):\n---\n" + system + "\n---\nUSER MESSAGE TEMPLATE:\n" + user + "\n")
 
 

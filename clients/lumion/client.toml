@@ -44,10 +44,11 @@ include_wins = true
 reuse_fit_check = false
 
 # Copy windows from the spec (section 1): the account runs E1 at 380 to 460 and E2 under 700, the
-# pipeline wants E1 300 to 500 and E2 600 to 800. The intersection is used.
+# pipeline wants E1 300 to 500 and E2 600 to 800. The intersection is used, except that Email 2's floor is 550 (Emmanuel, 2026-10-09):
+# the model lands at 570 to 597 and was rewriting up to seven times to clear 600.
 email1_min_chars = 380
 email1_max_chars = 460
-email2_min_chars = 600
+email2_min_chars = 550
 email2_max_chars = 699
 
 fit_rule = "a private US school or training provider (trade, career, beauty, aesthetics, wellness, healthcare, tech, union or corporate training) that is not a nonprofit, public or government body, not outside the United States and not too big"

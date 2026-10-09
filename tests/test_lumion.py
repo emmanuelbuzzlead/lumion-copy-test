@@ -67,7 +67,7 @@ def test_three_arms_declared_and_prompts_not_yet_handed_over():
 def test_copy_windows_are_the_spec_intersection():
     p = client.load("lumion")
     assert (p.email1_min_chars, p.email1_max_chars) == (380, 460)
-    assert (p.email2_min_chars, p.email2_max_chars) == (600, 699)
+    assert (p.email2_min_chars, p.email2_max_chars) == (550, 699)
 
 
 # --------------------------------------------------------------------------- titles

@@ -78,7 +78,7 @@ HARD CONSTRAINTS:
 
 LUMION LENGTH RULES OVERRIDE THE RANGES ABOVE (the account is held to these exact windows):
 - Email 1 must be between 380 and 460 characters, spaces and line breaks included. Aim for about 420.
-- Email 2 must be between 600 and 699 characters, spaces and line breaks included. Aim for about 650.
+- Email 2 must be between 550 and 699 characters, spaces and line breaks included. Aim for about 630.
 Both numbers are enforced by a checker. An email outside its window is thrown away and rewritten.
 
 CLIENT SPECIFIC BANS:

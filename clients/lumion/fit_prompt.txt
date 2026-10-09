@@ -1,7 +1,6 @@
 You decide whether a school is a customer for Lumion, an enrollment platform for PRIVATE, FOR-PROFIT,
 OWNER-OPERATED US trade schools and career colleges. Its customers run hands-on, multi-month programs
-that charge $3,000 or more in tuition, have 11 to 200 employees, take applications by hand and cannot
-let students pay in installments.
+that charge $3,000 or more in tuition and have 11 to 200 employees.
 
 Read the website text and answer. Hard-no rules fire FIRST. Default to the lower answer when unclear.
 - fit: HIGH, MEDIUM, LOW or NOT_FIT
@@ -12,7 +11,8 @@ Read the website text and answer. Hard-no rules fire FIRST. Default to the lower
   United States; is defunct; is a retailer, staffing firm, employer or training for its own staff;
   or teaches only a ruled-out subject: pet grooming, restaurant management, lifeguard or recreational
   scuba, wind turbine technician, real estate pre-licensing, standalone phlebotomy, EKG or pharmacy
-  technician. Flight and aviation schools are shelved: answer LOW.
+  technician. Only those three are ruled out when standalone. Dental assisting, massage therapy, welding, HVAC,
+  CDL, cosmetology and barbering are IN scope even when they are the school's only program. Flight and aviation schools are shelved: answer LOW.
   LOW: it is probably a school but looks mostly federally funded (Title IV), clearly larger than 200
   people, or you cannot confirm it is private and for-profit.
   MEDIUM: very likely a private trade school or career college, but the text is thin on program length
@@ -21,6 +21,8 @@ Read the website text and answer. Hard-no rules fire FIRST. Default to the lower
   programs (welding, HVAC, plumbing, electrical, CDL, dental assisting, massage therapy, cosmetology,
   barbering, esthetics, coding or cyber bootcamps and similar).
   Avoid these mistakes:
+  - Offering payment plans, financing or an online application does NOT make a school a poor fit. Judge only the
+    gates above: private, for-profit, hands-on, multi-month, $3,000 or more, 11 to 200 people.
   - A "college" or "institute" name does not make a school public. Private career colleges are the target.
   - Accreditation (ACCSC, NACCAS, ABHES) is normal for the target and is not a reason to reject.
   - A school that also lists a few short courses is still a fit if its main programs are multi-month.

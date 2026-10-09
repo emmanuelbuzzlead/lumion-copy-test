@@ -253,33 +253,37 @@ def _anthropic(model: str, system: str, user: str, temperature: float,
         "system": [{"type": "text", "text": system,
                     "cache_control": {"type": "ephemeral"}}],
         "messages": [{"role": "user", "content": user}],
+        # Short, rule-following calls. claude-sonnet-5 thinks by default and spent a 300-token fit-check budget on hidden
+        # thinking, returning a thinking block with no text (Lumion, 2026-10-09: 6 of 20 fit checks failed that way).
+        # The Concentrate path already disables it; this path did not.
+        "thinking": {"type": "disabled"},
     }
-    try:
-        with _LLM_GATE:
-            data = request(
-                "anthropic", "POST", ANTHROPIC_URL,
-                headers={
-                    "x-api-key": settings.anthropic_api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                },
-                json_body=body,
-            )
-    except VendorError as exc:
-        if _is_outage(exc.status, str(exc)):
-            raise LLMUnavailable(f"anthropic {exc.status}: {str(exc)[:200]}") from exc
-        # Newer models refuse the parameter outright ("`temperature` is deprecated for this model"). The
-        # Concentrate path already retries without it; do the same here instead of failing the whole call.
-        if exc.status == 400 and "temperature" in str(exc).lower() and "temperature" in body:
-            body.pop("temperature")
+    data = None
+    for _attempt in range(3):
+        try:
             with _LLM_GATE:
                 data = request(
                     "anthropic", "POST", ANTHROPIC_URL,
-                    headers={"x-api-key": settings.anthropic_api_key, "anthropic-version": "2023-06-01",
-                             "content-type": "application/json"},
+                    headers={
+                        "x-api-key": settings.anthropic_api_key,
+                        "anthropic-version": "2023-06-01",
+                        "content-type": "application/json",
+                    },
                     json_body=body,
                 )
-        else:
+            break
+        except VendorError as exc:
+            if _is_outage(exc.status, str(exc)):
+                raise LLMUnavailable(f"anthropic {exc.status}: {str(exc)[:200]}") from exc
+            msg = str(exc).lower()
+            # Newer models refuse a parameter outright ("`temperature` is deprecated for this model"). Send the same
+            # request without it, as the Concentrate path does, instead of failing every call that model makes.
+            if exc.status == 400 and "temperature" in msg and "temperature" in body:
+                body.pop("temperature")
+                continue
+            if exc.status == 400 and "thinking" in msg and "thinking" in body:
+                body.pop("thinking")
+                continue
             raise
     blocks = (data or {}).get("content") or []
     text = "".join(b.get("text", "") for b in blocks if isinstance(b, dict))

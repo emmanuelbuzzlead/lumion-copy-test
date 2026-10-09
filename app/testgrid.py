@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import tomllib
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -545,6 +546,10 @@ def refill_pool(run_id: str | None = None) -> dict:
     """
     from . import client, modes
     from .clients import llm, slack
+    # Lumion: sourcing NEW (never contacted) companies is deferred until Emmanuel asks for it (2026-10-09). It spends on
+    # company search and fit checks for every approved vertical, so it stays off until POOL_REFILL_ENABLED=true.
+    if os.getenv("POOL_REFILL_ENABLED", "false").strip().lower() not in ("1", "true", "yes"):
+        return {"status": "disabled"}
     if datetime.now(timezone.utc).weekday() not in POOL_REFILL_WEEKDAYS:
         return {"status": "not_scheduled_today"}
     with db.cursor() as cur:

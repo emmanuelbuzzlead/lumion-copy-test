@@ -489,11 +489,16 @@ def fill(post: bool = True) -> dict:
                 break
 
         end = counts(campaign_of)
-        try:
-            sres = assign_senders(campaign_of, end, run_id)
-            sender_notes = [f"{a}: {r['daily']}/day on {r['accounts']} accounts" for a, r in sres.items()]
-        except Exception as exc:
-            sender_notes = [f"sender step failed: {str(exc)[:120]}"]
+        if settings.skip_sender_attach:
+            # EmailBison has no detach route, so an account attached here stays. Lumion's sender plan is not decided yet,
+            # so the fill never attaches (SKIP_SENDER_ATTACH=true). The same flag already gates senders.align elsewhere.
+            sender_notes = ["not attached (SKIP_SENDER_ATTACH is on): attach senders by hand in EmailBison"]
+        else:
+            try:
+                sres = assign_senders(campaign_of, end, run_id)
+                sender_notes = [f"{a}: {r['daily']}/day on {r['accounts']} accounts" for a, r in sres.items()]
+            except Exception as exc:
+                sender_notes = [f"sender step failed: {str(exc)[:120]}"]
         done = all(end[a] >= targets[a] for a in angles)
         if post and (end != start or any(pulled.values())):
             lines = [f"*{_name()} copy-test fill* ({'complete' if done else 'progress'}, targets {targets})"]

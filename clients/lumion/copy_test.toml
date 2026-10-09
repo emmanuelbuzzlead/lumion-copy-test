@@ -47,7 +47,8 @@ expand_verticals = 3
 leads_per_new_vertical = 300
 
 [fill]
-target = 1000
+# PROOF SIZE. Raise to 1000 per angle only after the first sample is approved in Slack (Emmanuel, 2026-10-09).
+target = 15
 
 [fit]
 b2b_product_makers = ""

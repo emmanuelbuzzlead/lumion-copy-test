@@ -168,3 +168,22 @@ def test_a_campaign_with_an_unread_page_is_reported_incomplete(monkeypatch):
     monkeypatch.setattr(lrc.time, "sleep", lambda s: None)
     rows, ok = lrc.read_campaign(9, None)
     assert ok is False and len(rows) == 1
+
+
+# --------------------------------------------------------------------------- proof-phase safety
+
+def test_new_company_sourcing_is_off_until_asked_for(monkeypatch):
+    from app import testgrid
+    monkeypatch.delenv("POOL_REFILL_ENABLED", raising=False)
+    assert testgrid.refill_pool("t") == {"status": "disabled"}
+
+
+def test_the_fill_never_attaches_senders_when_the_flag_is_on():
+    src = (ROOT / "app" / "wave1_fill.py").read_text(encoding="utf-8")
+    assert "if settings.skip_sender_attach:" in src and src.index("if settings.skip_sender_attach:") < src.index("assign_senders(campaign_of, end, run_id)")
+
+
+def test_the_proof_fill_is_small():
+    import tomllib
+    cfg = tomllib.loads((ROOT / "clients" / "lumion" / "copy_test.toml").read_text(encoding="utf-8"))
+    assert cfg["fill"]["target"] == 15

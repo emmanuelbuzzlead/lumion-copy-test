@@ -112,7 +112,7 @@ def _company_inputs(domain: str, company_name: str) -> tuple[str, str, str]:
         # site (a dead or blocked domain): a name search, as the original dead-site fallback. Never news or
         # competitor searches for this client.
         from ..clients import jina
-        text = jina.website_text(domain)
+        text = jina.website_text_with_pages(domain)     # home page plus the admissions, contact and schedule pages
         if not text:
             found = serper.search_by_name(company_name)
             text = (f"[{domain} has no readable website; found by company name instead]\n{found}" if found else

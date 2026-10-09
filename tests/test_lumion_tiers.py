@@ -187,3 +187,58 @@ def test_the_proof_fill_is_small():
     import tomllib
     cfg = tomllib.loads((ROOT / "clients" / "lumion" / "copy_test.toml").read_text(encoding="utf-8"))
     assert cfg["fill"]["target"] == 15
+
+
+# --------------------------------------------------------------------------- multi-page signal reading
+
+from app.clients import jina  # noqa: E402
+
+HOME = """# Acme Welding Academy
+[Home](https://acmewelding.edu/) [Programs](https://acmewelding.edu/programs) [Admissions](https://acmewelding.edu/admissions)
+[Contact Us](https://acmewelding.edu/contact-us) [Class Schedule](https://acmewelding.edu/class-schedule) [Blog](https://acmewelding.edu/blog/post-1)
+[Facebook](https://facebook.com/acme) [Download Application](https://acmewelding.edu/files/application.pdf) ![logo](https://acmewelding.edu/logo.png)
+[Email](mailto:info@acmewelding.edu) [Apply](/apply-now#top)
+"""
+
+
+def test_only_same_site_real_pages_are_candidates():
+    urls = [u for _t, u in jina.extract_links(HOME, "acmewelding.edu")]
+    assert "https://acmewelding.edu/admissions" in urls and "https://acmewelding.edu/apply-now" in urls
+    assert not any("facebook" in u or "blog" in u or u.endswith(".png") or u.startswith("mailto") for u in urls)
+
+
+def test_one_page_is_picked_per_signal_group():
+    picked = jina.pick_pages(jina.extract_links(HOME, "acmewelding.edu"))
+    assert picked[0].endswith(("/admissions", "/apply-now"))          # apply group
+    assert "https://acmewelding.edu/contact-us" in picked              # hours group
+    assert "https://acmewelding.edu/class-schedule" in picked          # dates group
+    assert len(picked) == len(set(picked)) <= 3
+
+
+def test_application_pdf_links_are_found_with_their_text():
+    assert jina.pdf_links(HOME, "acmewelding.edu") == [("Download Application", "https://acmewelding.edu/files/application.pdf")]
+
+
+def test_the_combined_text_marks_each_page_and_lists_the_pdfs(monkeypatch):
+    pages = {"https://acmewelding.edu/admissions": "Apply: print the PDF and bring it in. " * 4,
+             "https://acmewelding.edu/contact-us": "Office hours Monday to Friday 8am to 5pm. " * 4,
+             "https://acmewelding.edu/class-schedule": "Next class starts January 12. " * 4}
+    monkeypatch.setattr(jina, "_fetch_url", lambda u, n, links_summary=False: (HOME + "x" * 100) if u == "https://acmewelding.edu" else pages.get(u, ""))
+    text = jina.website_text_with_pages("acmewelding.edu")
+    assert "PAGE: https://acmewelding.edu/contact-us" in text and "Office hours Monday to Friday" in text
+    assert "starts January 12" in text and "PDF LINKS FOUND ON THE SITE" in text and "application.pdf" in text
+
+
+def test_a_dead_home_page_yields_nothing_and_never_raises(monkeypatch):
+    monkeypatch.setattr(jina, "_fetch_url", lambda u, n, links_summary=False: "")
+    assert jina.website_text_with_pages("dead.example") == ""
+
+
+def test_the_copy_stage_reads_the_extra_pages():
+    assert "jina.website_text_with_pages(domain)" in (ROOT / "app" / "stages" / "s5_copy.py").read_text(encoding="utf-8")
+
+
+def test_hours_buried_deep_in_a_long_page_survive_the_trim():
+    long = "intro line about the school. " * 400 + "\nOffice hours: Monday to Friday 8am to 5pm\n" + "more filler text here. " * 50
+    out = jina._signal_trim(long, 1000, 600)
+    assert "Office hours: Monday to Friday 8am to 5pm" in out and len(out) < 2200

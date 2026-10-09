@@ -100,6 +100,9 @@ When SIMILAR_TYPE is NONE, end with this fallback verbatim:
 RESEARCH_COMMON = """You research one private school for Lumion, an enrollment tool for private trade schools and career colleges, and you write a short
 factual brief that a copywriter will use. You are given the school's website text and vendor data. Use ONLY what those contain.
 Never guess. Never use anything older than the cutoff date as a trigger. If a fact is not in the data write NONE FOUND.
+The website text may hold several pages. Each extra page starts with a line "PAGE: <url>", and a final section "PDF LINKS FOUND ON THE SITE" lists
+every PDF link with its link text. Read ALL of it. Office hours are often on the contact page, application details on the admissions page, and
+start dates on a schedule or calendar page.
 
 ICP GATES (Emmanuel, 2026-10-09). Hard no fires first. The ONLY hard nos are: outside the United States; nonprofit, public or government;
 too big (a large university or college system, over about 200 employees); defunct; not a school or training provider at all.
@@ -125,13 +128,14 @@ SIGNALS = {
 SIGNAL_EVIDENCE: the exact words or link text from the site that prove it (for example "Download Application (PDF)"), or none_found""",
         """SIGNAL RULES. Fetch the apply, enroll or admissions text in the website data. pdf means the application is a downloadable or printable
 PDF. print_and_bring means it must be printed and handed in. call_to_schedule means the only entry point is calling, or booking a tour or
-call first. online_form means students can start and submit the application online. If you cannot tell, write none_found. Never infer a format
+call first. online_form means students can start and submit the application online. A PDF link whose text mentions apply, application, enroll or registration
+is strong proof of pdf. If you cannot tell, write none_found. Never infer a format
 from the school's size or industry."""),
     "after-5pm": (
         """SIGNAL_OFFICE_CLOSE_TIME: 24 hour HH:MM local time of the weekday office close, or none_found
 SIGNAL_WEEKEND_HOURS: open, closed or none_found
 SIGNAL_SOURCE: google or website""",
-        """SIGNAL RULES. Look for office, admissions or front desk hours in the website data (footer, contact page, hours block) and in the
+        """SIGNAL RULES. Look for office, admissions or front desk hours in the website data (footer, the PAGE: contact page, hours block) and in the
 vendor data. Use the WEEKDAY close time. If the hours differ by day, use the most common weekday close. Convert to 24 hour time. Write
 SIGNAL_SOURCE as google only if the hours came from a Google listing in the data, otherwise website. If no hours are present write none_found.
 Never assume hours."""),

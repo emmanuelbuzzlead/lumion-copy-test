@@ -5,8 +5,9 @@ training centers, and corporate or continuing education training companies.
 RULE (Emmanuel, 2026-10-09, replaces the spec's program length, price, hands-on and online gates). A company is a misfit ONLY when it is:
   1. based outside the United States,
   2. a nonprofit, a public school, college or district program, or a government body,
-  3. too big: a degree-granting university or college system (bachelor's degrees or higher, or several campuses in different
-     states or territories), or clearly over about 200 employees,
+  3. too big: clearly over about 200 employees, such as a national or multi-state chain, or a university system with thousands of
+     students. A small or single-campus school that happens to grant degrees (bachelor's or master's) is NOT too big. Several
+     campuses in one region is not too big either.
   4. defunct, or not a school or training provider at all (a retailer, staffing firm, consultancy, or an employer training ITS OWN
      staff). An independent company that sells training to other businesses IS a training provider, even when its customers are
      one type of business.
@@ -22,6 +23,11 @@ Read the website text and answer.
   HIGH: clearly a US private school or training provider.
   Avoid these mistakes:
   - A "college" or "institute" name does not make a school public or large. Judge the evidence.
+  - A thin, placeholder, under-construction, broken or redirected website is NOT evidence of a misfit. If the sourcing note says the
+    company is on a federal or state school list, or comes from a school search, treat it as a real school (MEDIUM at least) unless
+    the page clearly shows something else.
+  - Do not confuse a private school with a public school district or public college of a similar name. Judge who owns this website
+    and whose address it shows.
   - Offering payment plans, financing, an online application, WIOA, or Title IV does not make a school a poor fit.
   - A company that mixes training with other services is a fit if training is a main business.
 - reason: one short sentence of evidence from the text

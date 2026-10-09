@@ -76,6 +76,7 @@ MODEL_MAP = {
     "anthropic/claude-haiku-4-5": "claude-haiku-4-5-20251001",
     "anthropic/claude-sonnet-5": "claude-sonnet-5",
     "anthropic/claude-sonnet-4.5": "claude-sonnet-4-5",
+    "anthropic/claude-opus-5.5": "claude-opus-5-5",
 }
 
 # Models with no Concentrate equivalent, and what serves them instead.
@@ -356,6 +357,7 @@ def _openrouter(model: str, system: str, user: str, temperature: float,
     choices = (data or {}).get("choices") or []
     if not choices:
         raise VendorError("openrouter", None, f"no choices: {str(data)[:300]}")
+    _record_usage(model, "openrouter", (data or {}).get("usage") or {})
     return (choices[0].get("message") or {}).get("content") or ""
 
 
@@ -477,9 +479,10 @@ def complete_meta(model: str, system: str, user: str, temperature: float,
         except LLMUnavailable as exc:
             last = exc
             _mark_down(name)
-            if name != order[-1]:
+            remaining = order[order.index(name) + 1:]
+            if remaining:
                 print(f"[llm] {name} unavailable ({str(exc)[:60]}); skipping it for "
-                      f"{DOWN_FOR // 60} min, falling back to {order[-1]}", flush=True)
+                      f"{DOWN_FOR // 60} min, falling back to {remaining[0]}", flush=True)
             continue
     raise LLMUnavailable(f"every configured provider is out: {last}")
 

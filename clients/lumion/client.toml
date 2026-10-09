@@ -25,10 +25,9 @@ default_mode = "copy-test"
 # Arm whose prompts a partial arm inherits. Spec order puts After 5PM first.
 base_variant = "after-5pm"
 
-# Never email anyone inside 90 days. Lumion's unresponsive pool has seen ONE angle 6 to 15 times
-# (lumion-outreach-audit), so the floor is higher than the 60 days used for ProQ.
-recontact_days = 90
-history_file = "history_domains.csv"
+# ProductEVO's rule, verbatim: nobody is contacted again inside 60 days. Past that the tier table decides the order
+# (company_funnel.tier, see app/funnel.py): 1 never contacted, then 2 (over 120 days), 3 (over 90), 4 (over 60).
+recontact_days = 60
 
 # Owner and operator first, then admissions and enrollment leaders (titles.txt order). Spec first
 # run used 3 contacts per domain; raise to 5 for the scale run.

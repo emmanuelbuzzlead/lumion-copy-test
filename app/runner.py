@@ -502,6 +502,49 @@ def llm_probe_ok() -> bool:
     return vendors_ready()[0]
 
 
+_COPY_TEST_TICK_LOCK = "copy_test_scale_tick"
+_COPY_TEST_TICK_STALE_MIN = 15   # tick_scale_ups does a bank check + maybe one feed_campaign call; 15 min is generous
+
+
+def _tick_copy_test_scaling() -> None:
+    """Troy, 2026-10-08: "we need to fix such error so it doesnt happen again, ever."
+
+    Found 2026-10-08: tick_scale_ups used to run INSIDE resume(), after the run_alive()
+    gate below -- which blocks every resume() call while ANY prior one is still "alive"
+    (a 10-minute heartbeat). A resume() tick that got stuck for 6+ hours deep in the
+    unrelated general-vertical pipeline (retrying copy for a couple of stubborn contacts
+    over and over) kept its heartbeat alive that whole time, so every later tick saw
+    "already running" and never reached tick_scale_ups at all -- MMM's scale-up sat
+    frozen since 2:40 AM while that one tick was still "running" at 6:48 PM.
+
+    This now runs FIRST, before that gate, under its own short separate lock -- so a
+    stuck general-pipeline run can structurally never block copy-test scaling again,
+    no matter how long it runs or what it gets stuck on.
+    """
+    with db.cursor() as cur:
+        cur.execute("""CREATE TABLE IF NOT EXISTS job_locks (name TEXT PRIMARY KEY, holder TEXT,
+                       heartbeat_at TIMESTAMPTZ NOT NULL DEFAULT now())""")
+        cur.execute("""INSERT INTO job_locks (name, holder, heartbeat_at) VALUES (%s, %s, now())
+                       ON CONFLICT (name) DO UPDATE SET holder=EXCLUDED.holder, heartbeat_at=now()
+                       WHERE job_locks.heartbeat_at < now() - make_interval(mins => %s)
+                       RETURNING holder""",
+                    (_COPY_TEST_TICK_LOCK, "tick-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%f"),
+                     _COPY_TEST_TICK_STALE_MIN))
+        got = cur.fetchone() is not None
+    if not got:
+        return
+    try:
+        from . import testgrid as _testgrid_scale
+        tick = _testgrid_scale.tick_scale_ups("copy-test-tick-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S"))
+        if tick.get("status") == "ticked":
+            print(f"[resume] scale-up tick: {tick}", flush=True)
+    except Exception as exc:
+        print(f"[warn] scale-up tick failed: {exc}", flush=True)
+    finally:
+        with db.cursor() as cur:
+            cur.execute("DELETE FROM job_locks WHERE name=%s", (_COPY_TEST_TICK_LOCK,))
+
+
 def resume() -> dict:
     """Finish verticals a halted run left paused. Cron-driven, every two hours.
 
@@ -513,6 +556,8 @@ def resume() -> dict:
     # Same schema step the weekly run takes: a resume that starts on a freshly deployed
     # column without it fails every vertical on the first query (2026-09-13, slack_ts).
     db.init_schema()
+    # Copy-test scaling first, independent of everything below -- see _tick_copy_test_scaling.
+    _tick_copy_test_scaling()
     # Close 'running' rows no worker can still own, so they stop accumulating.
     closed = db.close_abandoned_runs()
     if closed:
@@ -549,18 +594,8 @@ def resume() -> dict:
     def _mins_left() -> int:
         return max(int((tick_deadline - _time.monotonic()) / 60), 0)
 
-    # Winner scale-ups (Troy, 2026-10-06: "stick with the newer but make it as fast as the
-    # older"). This MUST run before wave1_fill below, not after: wave1_fill.needed() is true
-    # almost every tick, and its block below RETURNS early when it finds work, which was
-    # silently starving any scale-up hook placed after it -- the exact reason the vertical-
-    # scoped scale-up job ran so much slower than wave1_fill despite both being 2-hourly.
-    try:
-        from . import testgrid as _testgrid_scale
-        tick = _testgrid_scale.tick_scale_ups(run_id)
-        if tick.get("status") == "ticked":
-            print(f"[resume] scale-up tick: {tick}", flush=True)
-    except Exception as exc:
-        print(f"[warn] scale-up tick failed: {exc}", flush=True)
+    # Winner scale-ups now tick at the very top of resume(), via _tick_copy_test_scaling(),
+    # before the run_alive() gate -- see that function's docstring for why.
 
     # Wave 1 campaign fill (ProductEVO, Troy 2026-09-27): keep the angle campaigns topped
     # up to target, so a stall -- vendor out of credit, container restart -- resumes on the

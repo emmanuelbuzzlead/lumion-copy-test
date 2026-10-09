@@ -603,6 +603,11 @@ def run_source(profile, audience: str | None, contacts: int, dry_run: bool = Fal
     if not companies:
         db.finish_run(run_id, "no_supply", "no companies survived the gate")
         return {"run_id": run_id, "vertical": vertical.name, "companies": 0, "contacts": 0}
+    try:
+        from . import funnel
+        funnel.refresh(run_id)        # newly sourced companies enter the tier table as tier 1 (never contacted)
+    except Exception as exc:
+        db.log(run_id, "stage3", f"funnel refresh failed: {exc}", level="warn")
     if companies_only:
         db.finish_run(run_id, "complete", f"sourced {len(companies)} companies "
                       f"(companies-only, no contact finding)")

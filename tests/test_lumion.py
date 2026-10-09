@@ -17,7 +17,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import client, company_fit, consultant_gate as gate, copy_rules, testgrid  # noqa: E402
+from app import client, company_fit, copy_rules, testgrid  # noqa: E402
 from app.stages import s4_people  # noqa: E402
 
 LUMION = client.CLIENTS_DIR / "lumion"
@@ -132,64 +132,6 @@ def test_the_coordinator_exception_is_only_for_declared_titles():
 
 def test_office_manager_is_not_a_target():
     assert s4_people.score_title("Office Manager", 15) == 0
-
-
-# --------------------------------------------------------------------------- history gate
-
-@pytest.fixture
-def gated(monkeypatch):
-    prof = SimpleNamespace(name="lumion", history_file="h.csv", partition_lo=None, partition_hi=None,
-                           recontact_days=90)
-    monkeypatch.setattr(gate, "_profile", lambda: prof)
-    hist = {
-        "replied.edu": ("blocked_replied", date(2026, 9, 1)),
-        "unsub.edu": ("blocked_unsubscribed", date(2026, 9, 1)),
-        "live.edu": ("in_flight", None),
-        "recent.edu": ("emailed_no_response", TODAY - timedelta(days=45)),
-        "d100.edu": ("emailed_no_response", TODAY - timedelta(days=100)),
-        "d130.edu": ("emailed_no_response", TODAY - timedelta(days=130)),
-        "d200.edu": ("emailed_no_response", TODAY - timedelta(days=200)),
-    }
-    monkeypatch.setattr(gate, "history", lambda: hist)
-    return hist
-
-
-def test_replied_unsubscribed_and_in_flight_are_blocked(gated):
-    out = gate.blocked(list(gated) + ["fresh.edu"], today=TODAY)
-    assert {"replied.edu", "unsub.edu", "live.edu", "recent.edu"} <= set(out)
-    assert "fresh.edu" not in out and "d100.edu" not in out
-
-
-def test_lumion_floor_is_90_days_not_60(gated):
-    assert gate.min_days() == 90
-    assert "recent.edu" in gate.blocked(["recent.edu"], today=TODAY)       # 45 days
-    assert gate.blocked(["d100.edu"], today=TODAY) == {}                    # 100 days
-
-
-def test_reentry_ladder_is_fresh_then_older_first(gated):
-    assert gate.ladder_days() == (150, 120, 90)
-    assert gate.age_rank("fresh.edu", TODAY) == 0
-    assert gate.age_rank("d200.edu", TODAY) == 1      # 150+
-    assert gate.age_rank("d130.edu", TODAY) == 2      # 120+
-    assert gate.age_rank("d100.edu", TODAY) == 3      # 90+
-    assert gate.age_rank("recent.edu", TODAY) == 9
-
-
-def test_the_gate_fails_loudly_when_the_history_file_is_missing(monkeypatch, tmp_path):
-    prof = SimpleNamespace(name="lumion", history_file="nope.csv", partition_lo=None, partition_hi=None,
-                           recontact_days=90)
-    monkeypatch.setattr(gate, "_profile", lambda: prof)
-    monkeypatch.setattr(client, "CLIENTS_DIR", tmp_path)
-    (tmp_path / "lumion").mkdir()
-    with pytest.raises(RuntimeError, match="Refusing to run"):
-        gate.history()
-
-
-def test_the_real_history_file_exists_and_is_wellformed():
-    path = LUMION / "history_domains.csv"
-    assert path.exists(), "build history_domains.csv from the send log before any run"
-    head = path.read_text(encoding="utf-8").splitlines()[0]
-    assert head.split(",")[:5] == ["domain", "company", "status", "tier", "last_emailed"]
 
 
 # --------------------------------------------------------------------------- fit prompt

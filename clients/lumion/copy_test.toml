@@ -49,3 +49,13 @@ target = 1000
 
 [fit]
 b2b_product_makers = ""
+
+# One line per angle for the Friday one-pager (app/weekly_report.py). The text before the dash is the angle's name.
+[angle_pitch]
+PDF    = "The PDF Application — \"students quit a paper application halfway and nobody ever sees it, here is a mobile one that finishes itself\""
+AFTER5 = "After 5PM — \"people who work days call after your office closes, here is a phone agent that books the callback\""
+START  = "Next Start Date — \"the quickest seats to fill are people who already asked, here is the follow up that reaches them\""
+
+# Self-learning angles are OFF for Lumion. The module's prompts are written for ProductEVO. To turn it on, adapt them first, then:
+# [angle_learning]
+# enabled = true

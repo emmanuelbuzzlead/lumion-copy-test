@@ -59,6 +59,58 @@ def source_contacts(companies: list[dict], run_id: str) -> list[dict]:
     return people
 
 
+def pick_reuse_companies(verticals: list[str], n: int, recontact_days: int) -> list[dict]:
+    """Troy, 2026-10-08: a real fit (verdict=KEEP) contacted before isn't spent forever --
+    past the recontact window it's fair game again, and pick_companies() never looks at
+    it at all (tier=1 only). This is the second fallback tier, behind the bank and the
+    never-contacted pool, ahead of paying for brand-new company discovery."""
+    if n <= 0:
+        return []
+    with db.cursor() as cur:
+        cur.execute(
+            """SELECT DISTINCT ON (s.domain) s.domain, s.vertical, s.payload
+               FROM staged_companies s JOIN company_funnel f ON f.domain = s.domain
+               WHERE s.verdict = 'KEEP' AND s.vertical = ANY(%s)
+                 AND s.consumed_at IS NULL AND f.tier IS DISTINCT FROM 1
+                 AND NOT coalesce(f.replied, false)
+                 AND coalesce(f.days_since_contact, 0) >= %s
+               ORDER BY s.domain""", (verticals, recontact_days))
+        rows = cur.fetchall()
+    out = []
+    for r in rows[:n]:
+        c = r["payload"] if isinstance(r["payload"], dict) else json.loads(r["payload"] or "{}")
+        c.update(domain=r["domain"], vertical=r["vertical"], _tier="reuse")
+        out.append(c)
+    return out
+
+
+def source_contacts_reuse(companies: list[dict], run_id: str) -> list[dict]:
+    """These companies are past the recontact window: pull the people EmailBison already
+    holds for them (reuse.find) instead of paying for a fresh find -- the company is
+    already a confirmed fit, only the contact-finding step would otherwise repeat."""
+    from . import reuse
+    if not companies:
+        return []
+    people = []
+    for c in companies:
+        for p in reuse.find(c["domain"], c.get("name")):
+            people.append({
+                "email": p.email, "first_name": p.first_name, "last_name": p.last_name,
+                "title": p.title, "company_domain": p.company_domain,
+                "company_name": c.get("name") or p.company, "vertical": c["vertical"],
+            })
+    try:
+        db.reserve_contacts(people, run_id, None, status="verified")
+    except Exception as exc:
+        db.log(run_id, "scaling", f"reuse contacts not persisted: {exc}", level="warn")
+    by_v: dict[str, list[str]] = {}
+    for c in companies:
+        by_v.setdefault(c["vertical"], []).append(c["domain"])
+    for v, doms in by_v.items():
+        db.mark_found(v, doms)
+    return people
+
+
 def load_leads(campaign_id: int, rows: list[dict], run_id: str) -> list[dict]:
     """Chunks of 50; a rejected chunk is retried one lead at a time.
 
@@ -94,7 +146,17 @@ def load_leads(campaign_id: int, rows: list[dict], run_id: str) -> list[dict]:
 
 def feed_campaign(campaign_id: int, variant: str, verticals: list[str], target_leads: int,
                   run_id: str, yield_per_company: float = 0.5, max_rounds: int = 4) -> dict:
-    """Load up to target_leads NEW leads into campaign_id, sourcing only what that needs."""
+    """Load up to target_leads NEW leads into campaign_id, sourcing only what that needs.
+
+    Three tiers, cheapest/freest first (Troy, 2026-10-08):
+      1. the bank -- already-verified contacts, unused
+      2. never-contacted companies (tier 1) that already passed the fit gate
+      3. companies that DID pass the fit gate but were contacted before, now past the
+         recontact window -- a real, sitting-there pool pick_companies() never looked at
+    Fresh company discovery (the refill_pool/tick_scale_ups starvation path) is what
+    kicks in once all three of these are actually dry, not before.
+    """
+    from . import client
     from .stages import s5_copy
     loaded = sourced = companies_used = 0
     for _ in range(max_rounds):
@@ -109,14 +171,34 @@ def feed_campaign(campaign_id: int, variant: str, verticals: list[str], target_l
                              AND NOT coalesce(f.replied, false)
                            LIMIT %s""", (verticals, int(need * 1.4) + 5))
             banked = [dict(r) for r in cur.fetchall()]
+        companies: list[dict] = []
+        reuse_companies: list[dict] = []
         if len(banked) < need:
             companies = pick_companies(verticals, math.ceil((need - len(banked)) / yield_per_company * 1.2))
-            if not companies and not banked:
+            if companies:
+                companies_used += len(companies)
+                fresh = source_contacts(companies, run_id)
+                sourced += len(fresh)
+                banked += [dict(p, company_name=p.get("company_name")) for p in fresh]
+            if len(banked) < need:
+                recontact_days = client.profile().recontact_days
+                # Troy, 2026-10-08: "we need to fix such error so it doesnt happen again,
+                # ever." Found the same night this tier shipped: reuse.find() is a live,
+                # sequential EmailBison search per company, documented at up to ~31s each
+                # for an unknown domain -- and the uncapped batch size below (want * 1.2)
+                # requested over 13,000 companies for MMM's 10k target in one round,
+                # stalling the whole scale-up tick for an hour-plus with no error, no
+                # timeout, nothing to show for it. Reuse is a modest fallback tier, not a
+                # bulk source; cap it hard regardless of how much is actually needed.
+                wanted = math.ceil((need - len(banked)) / yield_per_company * 1.2)
+                reuse_companies = pick_reuse_companies(verticals, min(wanted, 25), recontact_days)
+                if reuse_companies:
+                    companies_used += len(reuse_companies)
+                    reused = source_contacts_reuse(reuse_companies, run_id)
+                    sourced += len(reused)
+                    banked += [dict(p, company_name=p.get("company_name")) for p in reused]
+            if not companies and not reuse_companies and not banked:
                 break
-            companies_used += len(companies)
-            fresh = source_contacts(companies, run_id)
-            sourced += len(fresh)
-            banked += [dict(p, company_name=p.get("company_name")) for p in fresh]
         for c in banked:
             c["copy_variant"] = variant
         ready, _ = s5_copy.run(banked[: int(need * 1.4) + 5], run_id)

@@ -375,6 +375,8 @@ def interaction_to_command(payload: dict) -> tuple[str, str | None, str | None]:
             return "kill_modal", batch_id, user
         if action.get("action_id") == "scale_lookalike_10k":
             return "scale_lookalike", batch_id, user
+        if (action.get("action_id") or "").startswith("launch_lookalike"):
+            return "launch_lookalike", batch_id, user
         return "ignore", None, user
     if kind == "view_submission":
         view = payload.get("view") or {}
@@ -444,6 +446,29 @@ async def slack_interact(request: Request) -> JSONResponse:
                 slack.post(text)
 
         threading.Thread(target=_approve, daemon=True).start()
+        return JSONResponse({})
+
+    if kind == "launch_lookalike":
+        response_url = payload.get("response_url")
+        angle_id, _, parent_angle = command.partition("|")
+
+        def _launch() -> None:
+            from . import angle_derivation
+            try:
+                result = angle_derivation.launch_new_test_angle(angle_id, parent_angle)
+                if result.get("status") == "launched":
+                    text = (f":rocket: Launched *{result['angle']}* (campaign {result['campaign_id']}) "
+                           f"off {parent_angle}. _(by {user})_")
+                else:
+                    text = f"Could not launch {angle_id}: {result.get('reason', result)}  _(by {user})_"
+            except Exception as exc:
+                text = f"Could not launch {angle_id}: {exc}  _(by {user})_"
+            if response_url:
+                slack.respond(response_url, text)
+            else:
+                slack.post(text)
+
+        threading.Thread(target=_launch, daemon=True).start()
         return JSONResponse({})
 
     if kind == "command":

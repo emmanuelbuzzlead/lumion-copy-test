@@ -231,7 +231,12 @@ def sync_booked_from_tags(limit: int = 200) -> dict:
             lead = emailbison._get(f"/api/leads/{int(r['eb_lead_id'])}")
         except Exception:
             continue
-        tags = (lead or {}).get("tags") or []
+        # Found 2026-10-05 (Troy: "kirk jones has the meeting booked tag, youre not doing
+        # something right"): GET /api/leads/{id} wraps the lead in {"data": {...}}, same
+        # as every other EmailBison response, but this read the tags off the UNWRAPPED
+        # top level -- which is always empty -- so this had checked 51 replied leads and
+        # could never once have found a real tag, by construction, not bad luck.
+        tags = ((lead or {}).get("data") or {}).get("tags") or []
         if any(int(t.get("id") or 0) == MEETING_BOOKED_TAG_ID for t in tags if isinstance(t, dict)):
             if db.mark_booked(r["email"], actor="emailbison-tag-sync"):
                 booked.append(r["email"])

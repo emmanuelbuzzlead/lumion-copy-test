@@ -29,6 +29,16 @@ FIT_WORKERS = int(os.getenv("WAVE1_FIT_WORKERS", "10"))
 STALE_MIN = 90   # a 600-contact copy batch can outlast 25 minutes
 
 
+def _name() -> str:
+    from . import client
+    return client.profile().display_name
+
+
+def _guess_unlabeled() -> bool:
+    from . import client
+    return client.profile().name == "productevo"
+
+
 def _lock(holder: str) -> bool:
     with db.cursor() as cur:
         cur.execute("""CREATE TABLE IF NOT EXISTS job_locks (name TEXT PRIMARY KEY, holder TEXT,
@@ -50,6 +60,23 @@ def _release(holder: str) -> None:
         cur.execute("DELETE FROM job_locks WHERE name=%s AND holder=%s", (LOCK, holder))
 
 
+def _targets_for(angles: dict, base_target: int) -> dict:
+    """Troy, 2026-10-09: "tiered leads... should be the bulk of our sourcing." The flat
+    [fill] target used to apply to every angle alike, including a decided winner with a
+    real 10,000-lead ceiling or a lookalike's 1,500-lead first stage -- so this engine
+    (which SHOULD carry most of the load, since it's reactivating known contacts, not
+    paying for fresh discovery) silently stopped contributing to MMM the moment its local
+    count crossed 2,000, leaving the entire rest of the climb to the much slower
+    fresh-discovery/90-day-reuse cascade in scaling.py. Use the REAL target from
+    scale_targets when the angle has one; fall back to the flat test-phase default
+    (still right for an angle still in its original 3-way test) otherwise.
+    """
+    with db.cursor() as cur:
+        cur.execute("SELECT angle, target_leads FROM scale_targets")
+        overrides = {r["angle"]: int(r["target_leads"]) for r in cur.fetchall()}
+    return {a: overrides.get(a, base_target) for a in angles}
+
+
 def _setup():
     cfg = testgrid.load_config()
     if not cfg or not cfg.get("angle_prompts"):
@@ -59,8 +86,10 @@ def _setup():
         campaign_of = {r["angle"]: int(r["campaign_id"]) for r in cur.fetchall()}
     if len(campaign_of) < len(cfg["angle_prompts"]):
         return None
-    target = int((cfg.get("fill") or {}).get("target", 1750))
-    return cfg, dict(cfg["angle_prompts"]), campaign_of, target
+    base_target = int((cfg.get("fill") or {}).get("target", 1750))
+    angles = dict(cfg["angle_prompts"])
+    targets = _targets_for(angles, base_target)
+    return cfg, angles, campaign_of, targets
 
 
 def counts(campaign_of: dict) -> dict:
@@ -85,9 +114,9 @@ def needed() -> bool:
     s = _setup()
     if not s:
         return False
-    _cfg, angles, campaign_of, target = s
+    _cfg, angles, campaign_of, targets = s
     have = counts(campaign_of)
-    return any(have[a] < target for a in angles)
+    return any(have[a] < targets[a] for a in angles)
 
 
 def sweep(angles: dict, campaign_of: dict, run_id: str) -> dict:
@@ -126,6 +155,43 @@ def _unstamp(domains: list[str]) -> None:
     with db.cursor() as cur:
         cur.execute("UPDATE company_funnel SET fit=NULL, fit_reason=NULL WHERE domain = ANY(%s) AND fit_reason=%s",
                     (domains, STAMP))
+
+
+def fit_check_unjudged_reuse_companies(recontact_days: int, run_id: str, batch_size: int = 40) -> int:
+    """Troy, 2026-10-09: "the fit gate should run when we need new contacts... go to the
+    database tier 2, run fit test on x companies, take the winners." The reuse-eligible
+    history pool (tier != 1, genuinely past the recontact window) has a large fraction
+    sitting at fit=NULL -- never run through the gate at all, so they're invisible to the
+    people-query below even though many would pass. This judges a bounded batch each
+    tick (same company_fit.check() the rest of this file already uses, same cost
+    profile) so that pool keeps opening up over time instead of sitting unjudged forever.
+    """
+    from . import company_fit
+    company_fit.ensure_columns()
+    with db.cursor() as cur:
+        # Troy, 2026-10-09: "fit check starts from unchecked in tier 2 straight down
+        # since tier 1 has been checked" -- tier 1 goes through a separate gate
+        # (staged_companies.verdict, used by pick_companies for fresh discovery) and is
+        # deliberately excluded above; among the tiers THIS gate does cover, work the
+        # closest-to-eligible first (tier 2, the oldest/most-settled previously-contacted
+        # group) and only reach into tier 5 once the nearer tiers are actually exhausted.
+        cur.execute("""SELECT DISTINCT f.domain, f.name, f.tier FROM company_funnel f
+                       WHERE f.tier != 1 AND f.fit IS NULL
+                         AND coalesce(f.days_since_contact, 0) >= %s
+                         AND EXISTS (
+                             SELECT 1 FROM history_leads h
+                             WHERE h.company_domain = f.domain AND coalesce(h.first_name, '') <> ''
+                               AND NOT EXISTS (SELECT 1 FROM history_replies r
+                                               WHERE r.email = h.email AND r.bounced_at IS NOT NULL))
+                       ORDER BY f.tier ASC, f.domain
+                       LIMIT %s""", (recontact_days, batch_size))
+        rows = [dict(r) for r in cur.fetchall()]
+    if not rows:
+        return 0
+    v = company_fit.check([{"domain": r["domain"], "name": r["name"]} for r in rows], workers=FIT_WORKERS)
+    won = sum(1 for x in v.values() if x.get("fit") in company_fit.PASS)
+    db.log(run_id, "wave1_fill", f"reuse fit-check: {len(rows)} companies judged, {won} passed")
+    return won
 
 
 def fit_filter(batch: list[dict], run_id: str) -> list[dict]:
@@ -236,7 +302,7 @@ def fill(post: bool = True) -> dict:
     s = _setup()
     if not s:
         return {"status": "no_test"}
-    cfg, angles, campaign_of, target = s
+    cfg, angles, campaign_of, targets = s
     angle_of_variant = {v: a for a, v in angles.items()}
     run_id = "wave1-fill-" + time.strftime("%Y%m%dT%H%M%S")
     if not _lock(run_id):
@@ -244,14 +310,34 @@ def fill(post: bool = True) -> dict:
     db.start_run(run_id)
     try:
         from . import modes
+        from .clients import slack
         beat_stop = modes.heartbeat(run_id)
         start = counts(campaign_of)
+        # Troy, 2026-10-06: "even if the system goes off by morning" -- a fill used to
+        # post to Slack only at the end, and only if something changed. A run that stalls
+        # for hours (a vendor outage, a slow batch) left total silence, indistinguishable
+        # from nothing having started at all. One quiet line up front fixes that.
+        if post:
+            try:
+                slack.post(f":hourglass_flowing_sand: {_name()} copy-test fill starting "
+                           f"(targets {targets}): {start}")
+            except Exception:
+                pass
         pulled = sweep(angles, campaign_of, run_id)
         pulled["fit"] = fit_sweep(campaign_of, run_id)
         _beat(run_id)
 
+        from . import client
+        recontact_days = client.profile().recontact_days
+        # Troy, 2026-10-09: 40/tick was too slow -- settled on 100/tick ("100 per hour"),
+        # which on this job's real ~2-hour cadence averages ~50/hour, ~1,200/day. At
+        # ~$0.0045/company (one Sonnet call each) that's ~$5.40/day, clearing the real
+        # 14,986-company backlog in under 2 weeks and staying cheap once caught up.
+        fit_check_unjudged_reuse_companies(recontact_days, run_id, batch_size=100)
+        _beat(run_id)
+
         def load_for(a: str, rows: list[dict]) -> int:
-            room = target - counts(campaign_of)[a]
+            room = targets[a] - counts(campaign_of)[a]
             rows = rows[:max(room, 0)]
             return len(scaling.load_leads(campaign_of[a], rows, run_id)) if rows else 0
 
@@ -267,6 +353,10 @@ def fill(post: bool = True) -> dict:
         by_angle = defaultdict(list)
         for r in saved:
             if r["copy_variant"] not in angle_of_variant:
+                # ProductEVO classified unlabeled saved copy by its wording. Another client's copy has no such
+                # signature, so an unlabeled row is left alone rather than put under the wrong angle.
+                if not _guess_unlabeled():
+                    continue
                 t = (r["personalization_1"] or "").lower()
                 r["copy_variant"] = ("mmm" if "would also buy" in t else
                                      "a-sleep-test" if ("second source" in t or "tariff" in t) else "time-back")
@@ -307,15 +397,25 @@ def fill(post: bool = True) -> dict:
         db.log(run_id, "wave1_fill", f"never-contacted queued first: {len(tier1)} contacts at {len(t1_by_dom)} companies")
 
         with db.cursor() as cur:
+            # Troy, 2026-10-09: was hardcoded to tier=2 specifically -- tier is a static
+            # label assigned whenever a company was last snapshotted, not a live value,
+            # and tier 3 (103-119 days since contact, confirmed by real data) is JUST as
+            # safely past the recontact window as tier 2 (128-577 days) but was never
+            # included. Filtering on the real days_since_contact field directly is both
+            # correct today and self-widening: tiers 4/5 (62-89 and 3-54 days -- genuinely
+            # NOT yet past the window) join automatically as they age past it, with no
+            # further code change and no risk of recontacting someone too soon.
             cur.execute("""SELECT DISTINCT ON (h.email) h.email, h.first_name, h.last_name, h.title,
                                   h.company, h.company_domain
                            FROM history_leads h JOIN company_funnel f ON f.domain = h.company_domain
-                           WHERE f.tier = 2 AND NOT coalesce(f.replied, false)
+                           WHERE f.tier != 1 AND coalesce(f.days_since_contact, 0) >= %s
+                             AND NOT coalesce(f.replied, false)
                              AND coalesce(f.fit, '') NOT IN ('LOW', 'NOT_FIT')
                              AND coalesce(h.first_name, '') <> ''
                              AND NOT EXISTS (SELECT 1 FROM contacts c WHERE c.email = h.email)
                              AND NOT EXISTS (SELECT 1 FROM history_replies r
-                                             WHERE r.email = h.email AND r.bounced_at IS NOT NULL)""")
+                                             WHERE r.email = h.email AND r.bounced_at IS NOT NULL)""",
+                        (recontact_days,))
             people = [dict(r) for r in cur.fetchall()]
         by_dom = defaultdict(list)
         for p in people:
@@ -343,15 +443,29 @@ def fill(post: bool = True) -> dict:
         while True:
             _beat(run_id)
             have = counts(campaign_of)
-            open_a = [a for a in angles if have[a] < target and queue[a]]
+            open_a = [a for a in angles if have[a] < targets[a] and queue[a]]
             if not open_a:
                 break
             batch = []
             for a in open_a:
-                n = min(int((target - have[a]) * 1.15) + 3, BATCH // len(open_a))
+                n = min(int((targets[a] - have[a]) * 1.15) + 3, BATCH // len(open_a))
                 batch += queue[a][:n]
                 queue[a] = queue[a][n:]
             batch = fit_filter(batch, run_id)
+            if not batch:
+                continue
+            # Troy, 2026-10-09: "reverify their emails." This used to stamp
+            # email_verified_at=now() unconditionally -- a timestamp claiming a check
+            # that never ran, for addresses that can be months to years old. Run the
+            # real waterfall (the same one fresh-sourced contacts go through) and drop
+            # anyone it can't confirm, instead of pushing stale addresses on a false
+            # "verified" record.
+            from .clients import waterfall
+            verified = waterfall.verify_batch(batch, run_id)
+            before_n = len(batch)
+            batch = [c for c in verified if waterfall.sendable(c)]
+            db.log(run_id, "wave1_fill",
+                  f"email re-verify: {len(batch)} of {before_n} confirmed sendable")
             if not batch:
                 continue
             with db.cursor() as cur:
@@ -376,9 +490,9 @@ def fill(post: bool = True) -> dict:
             sender_notes = [f"{a}: {r['daily']}/day on {r['accounts']} accounts" for a, r in sres.items()]
         except Exception as exc:
             sender_notes = [f"sender step failed: {str(exc)[:120]}"]
-        done = all(end[a] >= target for a in angles)
+        done = all(end[a] >= targets[a] for a in angles)
         if post and (end != start or any(pulled.values())):
-            lines = [f"*ProductEVO Wave 1 fill* ({'complete' if done else 'progress'}, target {target} each)"]
+            lines = [f"*{_name()} copy-test fill* ({'complete' if done else 'progress'}, targets {targets})"]
             for a, cid in campaign_of.items():
                 lines.append(f"• *{a}* (campaign {cid}): {end[a]} leads"
                              + (f", {pulled[a]} pulled for breaking current rules" if pulled.get(a) else ""))
@@ -394,7 +508,7 @@ def fill(post: bool = True) -> dict:
         db.finish_run(run_id, "failed", str(exc)[:200])
         if post:
             try:
-                slack.post(f":warning: ProductEVO Wave 1 fill paused: {str(exc)[:250]}. "
+                slack.post(f":warning: {_name()} copy-test fill paused: {str(exc)[:250]}. "
                            f"Loaded so far {counts(campaign_of)}; the 2-hourly job retries automatically.")
             except Exception:
                 pass

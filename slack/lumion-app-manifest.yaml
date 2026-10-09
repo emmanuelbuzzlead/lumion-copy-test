@@ -1,0 +1,31 @@
+# Slack app for Lumion. Create it at api.slack.com/apps -> Create New App -> From a manifest.
+# No secrets in this file. The app talks to exactly one web service: lumion-web.
+# Domain filled in 2026-10-09 (service lumion-web, project 9f364913).
+display_information:
+  name: Vertical Expander (Lumion)
+  description: Approve, kill and push Lumion copy-test batches
+features:
+  bot_user:
+    display_name: Vertical Expander Lumion
+    always_online: true
+  slash_commands:
+    - command: /lumion
+      url: https://lumion-web-production.up.railway.app/slack/command
+      description: Lumion expander commands
+      usage_hint: approve <batch_id> | kill <batch_id> | status
+      should_escape: false
+oauth_config:
+  scopes:
+    bot:
+      - chat:write
+      - commands
+      - files:write
+      - channels:read
+      - groups:read
+settings:
+  interactivity:
+    is_enabled: true
+    request_url: https://lumion-web-production.up.railway.app/slack/interact
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

@@ -175,8 +175,12 @@ def fit_check_unjudged_reuse_companies(recontact_days: int, run_id: str, batch_s
         # deliberately excluded above; among the tiers THIS gate does cover, work the
         # closest-to-eligible first (tier 2, the oldest/most-settled previously-contacted
         # group) and only reach into tier 5 once the nearer tiers are actually exhausted.
-        cur.execute("""SELECT DISTINCT f.domain, f.name, f.tier FROM company_funnel f
-                       WHERE f.tier != 1 AND f.fit IS NULL
+        # A history-only company has no name in the funnel, and a dead site then has nothing to search by. Take the name its
+        # leads carry in EmailBison (found 2026-10-09: cybertech-institute.com, really CyberTex Institute, was rejected
+        # because its old domain is dead and the name search ran on the domain itself).
+        cur.execute("""SELECT f.domain, coalesce(f.name, (SELECT max(h2.company) FROM history_leads h2
+                                                          WHERE h2.company_domain = f.domain)) AS name, f.tier FROM company_funnel f
+                       WHERE f.tier != 1 AND f.fit IS NULL AND NOT coalesce(f.replied, false)   -- replied companies are never contacted, so never paid for
                          AND coalesce(f.days_since_contact, 0) >= %s
                          AND EXISTS (
                              SELECT 1 FROM history_leads h

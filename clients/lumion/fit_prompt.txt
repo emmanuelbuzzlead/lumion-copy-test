@@ -23,6 +23,10 @@ Read the website text and answer. Hard-no rules fire FIRST. Default to the lower
   Avoid these mistakes:
   - Offering payment plans, financing or an online application does NOT make a school a poor fit. Judge only the
     gates above: private, for-profit, hands-on, multi-month, $3,000 or more, 11 to 200 people.
+  - WIOA, state eligible-training-provider lists, veterans benefits and military spouse grants are NOT Title IV federal student aid and are
+    not a reason to reject. Mark a school LOW for Title IV only when its site shows federal loans or Pell grants as its main funding.
+  - A multi-program healthcare or trades school with several campuses is a fit. Only a school that teaches ONLY phlebotomy, EKG or
+    pharmacy technician is ruled out.
   - A "college" or "institute" name does not make a school public. Private career colleges are the target.
   - Accreditation (ACCSC, NACCAS, ABHES) is normal for the target and is not a reason to reject.
   - A school that also lists a few short courses is still a fit if its main programs are multi-month.

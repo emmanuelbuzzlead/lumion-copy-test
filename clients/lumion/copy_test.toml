@@ -50,8 +50,9 @@ expand_verticals = 3
 leads_per_new_vertical = 300
 
 [fill]
-# PROOF SIZE. Raise to 1000 per angle only after the first sample is approved in Slack (Emmanuel, 2026-10-09).
-target = 15
+# 400 per angle (Emmanuel, 2026-10-09). The reuse supply is about 900 usable leads in total, so the fill will stop short of 1,200 on its own
+# unless new companies are sourced. It also pauses when the shared OpenRouter balance falls under OPENROUTER_MIN_BALANCE_USD (default 15).
+target = 400
 
 [fit]
 b2b_product_makers = ""

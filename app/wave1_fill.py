@@ -34,6 +34,29 @@ def _name() -> str:
     return client.profile().display_name
 
 
+def _min_openrouter() -> float:
+    try:
+        return float(os.getenv("OPENROUTER_MIN_BALANCE_USD", "15"))
+    except ValueError:
+        return 15.0
+
+
+def _openrouter_ok() -> tuple[bool, float]:
+    """(enough, remaining dollars). A floor of 0 disables the check, and a failed lookup never blocks a fill."""
+    floor = _min_openrouter()
+    key = os.getenv("OPENROUTER_API_KEY")
+    if floor <= 0 or not key:
+        return True, -1.0
+    try:
+        import httpx
+        r = httpx.get("https://openrouter.ai/api/v1/credits", headers={"Authorization": f"Bearer {key}"}, timeout=15)
+        d = (r.json() or {}).get("data") or {}
+        left = float(d.get("total_credits", 0)) - float(d.get("total_usage", 0))
+        return left >= floor, left
+    except Exception:
+        return True, -1.0
+
+
 def _reuse_fit_check() -> bool:
     from . import client
     return bool(client.profile().reuse_fit_check)
@@ -469,11 +492,20 @@ def fill(post: bool = True) -> dict:
                                  "title": c.title, "company_domain": dom, "company_name": c.company,
                                  "vertical": TIER2_VERTICAL, "copy_variant": angles[a]})
 
+        paused_note = ""
         while True:
             _beat(run_id)
             have = counts(campaign_of)
             open_a = [a for a in angles if have[a] < targets[a] and queue[a]]
             if not open_a:
+                break
+            # The OpenRouter account is SHARED with other clients, and copy falls back to it when Concentrate answers 402. A big fill
+            # must not drain it (Emmanuel, 2026-10-09: balance was $44 against a fill that could cost about $40).
+            enough, left = _openrouter_ok()
+            if not enough:
+                paused_note = (f"Paused: the shared OpenRouter balance is ${left:,.2f}, under the ${_min_openrouter():,.0f} floor. "
+                               f"Top it up, or fix the Concentrate 402, and the next 2-hourly tick continues.")
+                db.log(run_id, "wave1_fill", paused_note)
                 break
             batch = []
             for a in open_a:
@@ -535,6 +567,8 @@ def fill(post: bool = True) -> dict:
             lines.append("Senders: " + "; ".join(sender_notes))
             lines.append("All drafts. Nothing sends until you press start in EmailBison."
                          + ("" if done else " The 2-hourly job continues this automatically."))
+            if paused_note:
+                lines.append(":warning: " + paused_note)
             slack.post("\n".join(lines))
         db.finish_run(run_id, "complete", str(end))
         return {"status": "complete" if done else "partial", "counts": end, "pulled": pulled}

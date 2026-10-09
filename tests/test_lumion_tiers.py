@@ -183,10 +183,10 @@ def test_the_fill_never_attaches_senders_when_the_flag_is_on():
     assert "if settings.skip_sender_attach:" in src and src.index("if settings.skip_sender_attach:") < src.index("assign_senders(campaign_of, end, run_id)")
 
 
-def test_the_proof_fill_is_small():
+def test_the_fill_target_is_400_per_angle():
     import tomllib
     cfg = tomllib.loads((ROOT / "clients" / "lumion" / "copy_test.toml").read_text(encoding="utf-8"))
-    assert cfg["fill"]["target"] == 15
+    assert cfg["fill"]["target"] == 400
 
 
 # --------------------------------------------------------------------------- multi-page signal reading
@@ -310,3 +310,34 @@ def test_load_leads_returns_only_the_leads_that_were_really_attached(monkeypatch
     assert [r["email"] for r in scaling.load_leads(2030, rows, "run1")] == ["a@x.edu"]
     flagged = [r for kind, rr in calls["updates"] for r in rr if "another active" in str(r)]
     assert flagged, "the refused lead must be put back to needs_review with the reason"
+
+
+def test_the_fill_pauses_when_the_shared_openrouter_balance_is_low(monkeypatch):
+    from app import wave1_fill
+    import httpx
+
+    class R:
+        def json(self):
+            return {"data": {"total_credits": 1000.0, "total_usage": 990.0}}
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    monkeypatch.delenv("OPENROUTER_MIN_BALANCE_USD", raising=False)
+    monkeypatch.setattr(httpx, "get", lambda *a, **k: R())
+    ok, left = wave1_fill._openrouter_ok()
+    assert ok is False and round(left) == 10
+    monkeypatch.setenv("OPENROUTER_MIN_BALANCE_USD", "5")
+    assert wave1_fill._openrouter_ok()[0] is True
+
+
+def test_a_failed_balance_lookup_never_blocks_the_fill(monkeypatch):
+    from app import wave1_fill
+    import httpx
+
+    def boom(*a, **k):
+        raise RuntimeError("network")
+
+    monkeypatch.setenv("OPENROUTER_API_KEY", "k")
+    monkeypatch.setattr(httpx, "get", boom)
+    assert wave1_fill._openrouter_ok()[0] is True
+    monkeypatch.setenv("OPENROUTER_MIN_BALANCE_USD", "0")
+    assert wave1_fill._openrouter_ok() == (True, -1.0)

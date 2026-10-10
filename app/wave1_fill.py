@@ -547,27 +547,27 @@ def fill(post: bool = True) -> dict:
             batch = fit_filter(batch, run_id)
             if not batch:
                 continue
-            # Troy, 2026-10-09: "reverify their emails." This used to stamp
-            # email_verified_at=now() unconditionally -- a timestamp claiming a check
-            # that never ran, for addresses that can be months to years old. Run the
-            # real waterfall (the same one fresh-sourced contacts go through) and drop
-            # anyone it can't confirm, instead of pushing stale addresses on a false
-            # "verified" record.
-            from .clients import waterfall
-            verified = waterfall.verify_batch(batch, run_id)
-            before_n = len(batch)
-            batch = [c for c in verified if waterfall.sendable(c)]
-            db.log(run_id, "wave1_fill",
-                  f"email re-verify: {len(batch)} of {before_n} confirmed sendable")
+            # Emmanuel, 2026-10-10: "scrap the reverifier so leads can just flow in." These people were already emailed from this
+            # workspace, and EmailBison itself refuses bounced or unsubscribed leads at load time. Re-verifying cost minutes per batch and
+            # dropped a third of them (TryKitt is out of credit, so every borderline address came back inconclusive). Off by default;
+            # REVERIFY_EMAILS=true restores the Troy 2026-10-09 waterfall check. email_verified_at stays NULL when skipped, so no
+            # record claims a check that did not run.
+            reverify = os.getenv("REVERIFY_EMAILS", "false").lower() in ("1", "true", "yes")
+            if reverify:
+                from .clients import waterfall
+                verified = waterfall.verify_batch(batch, run_id)
+                before_n = len(batch)
+                batch = [c for c in verified if waterfall.sendable(c)]
+                db.log(run_id, "wave1_fill", f"email re-verify: {len(batch)} of {before_n} confirmed sendable")
             if not batch:
                 continue
             with db.cursor() as cur:
                 cur.executemany("""INSERT INTO contacts (email, first_name, last_name, title, company_domain,
                                    company_name, vertical, run_id, status, source, email_verified_at)
-                                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'verified','reuse_tier2', now())
+                                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,'verified','reuse_tier2', CASE WHEN %s THEN now() END)
                                    ON CONFLICT (email) DO NOTHING""",
                                 [(c["email"], c["first_name"], c["last_name"], c["title"], c["company_domain"],
-                                  c["company_name"], c["vertical"], run_id) for c in batch])
+                                  c["company_name"], c["vertical"], run_id, reverify) for c in batch])
             ready, _ = s5_copy.run(batch, run_id)
             per = defaultdict(list)
             for r in ready:

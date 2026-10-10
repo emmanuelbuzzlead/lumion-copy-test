@@ -244,3 +244,26 @@ def test_the_cta_must_refer_to_a_type_or_to_your_volume():
     assert any("similar school type" in v for v in _violations("Short note.\n\nWant me to send over what the first 30 days looked like for them?"))
     assert not any("similar school type" in v for v in _violations(
         "Short note.\n\nWant me to send over what the first 30 days looked like for a school doing your volume?"))
+
+
+def test_llm_ready_follows_the_real_chain(monkeypatch):
+    from app import wave1_fill
+    from app.clients import llm
+    monkeypatch.setenv("OPENROUTER_MIN_BALANCE_USD", "15")
+    # Concentrate answers: fine even when OpenRouter is empty.
+    monkeypatch.setattr(llm, "complete_meta", lambda *a, **k: ("x", "concentrate", "concentrate/m"))
+    monkeypatch.setattr(wave1_fill, "_openrouter_ok", lambda: (False, -0.27))
+    assert wave1_fill._llm_ready()[0] is True
+    # Only OpenRouter answers and it is under the floor: pause.
+    monkeypatch.setattr(llm, "complete_meta", lambda *a, **k: ("x", "openrouter", "openrouter/m"))
+    assert wave1_fill._llm_ready()[0] is False
+    # Nobody answers: pause.
+    def boom(*a, **k):
+        raise RuntimeError("402")
+    monkeypatch.setattr(llm, "complete_meta", boom)
+    assert wave1_fill._llm_ready()[0] is False
+
+
+def test_five_contacts_per_company():
+    from app import client, wave1_fill
+    assert client.profile().contacts_per_company == 5 and wave1_fill._seats() == 5

@@ -57,6 +57,39 @@ def _openrouter_ok() -> tuple[bool, float]:
         return True, -1.0
 
 
+def _seats() -> int:
+    """Contacts per company, from the client profile (Lumion: 5, Emmanuel 2026-10-10)."""
+    from . import client
+    return int(client.profile().contacts_per_company or 3)
+
+
+def _llm_ready() -> tuple[bool, str]:
+    """(ok to keep filling, why not). Follows the REAL waterfall instead of reading one account.
+
+    Copy runs Concentrate first, OpenRouter second; research runs OpenRouter first, Concentrate second. Reading only the OpenRouter
+    balance stopped a fill that Concentrate could have served (Emmanuel, 2026-10-10). Concentrate has no balance endpoint, and a tiny
+    call passes on a near-empty balance, so this sends one real-size copy-model call through the actual chain and sees who answers:
+      - Concentrate answers: fine, the shared OpenRouter account is not touched for copy.
+      - OpenRouter answers: fine only if its balance is above the floor (it is shared with other clients).
+      - nobody answers: pause until the next 2-hourly tick.
+    """
+    floor = _min_openrouter()
+    if floor <= 0:
+        return True, ""
+    try:
+        from .clients import llm
+        _t, provider, _m = llm.complete_meta("claude-sonnet-4-6", "You write one short sentence.",
+                                             "Write a sentence about welding school. " * 60, 0.2, max_tokens=1500, provider="copy")
+    except Exception as exc:
+        return False, f"no LLM provider answered a real-size copy call ({str(exc)[:120]}). Top up Concentrate or OpenRouter"
+    if provider == "openrouter":
+        enough, left = _openrouter_ok()
+        if not enough:
+            return False, (f"only OpenRouter is answering and its shared balance is ${left:,.2f}, under the ${floor:,.0f} floor. "
+                           f"Fix Concentrate or top OpenRouter up")
+    return True, provider
+
+
 def _reuse_fit_check() -> bool:
     from . import client
     return bool(client.profile().reuse_fit_check)
@@ -444,7 +477,7 @@ def fill(post: bool = True) -> dict:
             judged_ok = {r["domain"] for r in cur.fetchall()}
         for dom in sorted(t1_by_dom, key=lambda d: (d not in judged_ok, hashlib.sha256(d.encode()).hexdigest())):
             a = list(angles)[int(hashlib.sha256(f"wave1:{dom}".encode()).hexdigest(), 16) % len(angles)]
-            for r in t1_by_dom[dom][:3]:
+            for r in t1_by_dom[dom][:_seats()]:
                 queue[a].append({**r, "copy_variant": angles[a]})
         db.log(run_id, "wave1_fill", f"never-contacted queued first: {len(tier1)} contacts at {len(t1_by_dom)} companies")
 
@@ -476,14 +509,14 @@ def fill(post: bool = True) -> dict:
             cs = [Contact(first_name=p["first_name"], last_name=p["last_name"] or "", email=p["email"],
                           title=p["title"], linkedin_url=None, company=p["company"], company_domain=dom)
                   for p in by_dom[dom]]
-            chosen = select_contacts(cs, None, limit=3)
+            chosen = select_contacts(cs, None, limit=_seats())
             # Troy, 2026-09-27: 13,943 of 15,919 tier-2 people have NO title in the EmailBison
             # copy, and the title filter drops blanks -- which emptied the queue at ~400. We
             # emailed these people from this workspace before, so a blank title is allowed.
             # Title matches go first; a title the filter rejects stays out.
             if len(chosen) < 3:
                 picked = {c.email for c in chosen}
-                chosen += [c for c in cs if not (c.title or "").strip() and c.email not in picked][:3 - len(chosen)]
+                chosen += [c for c in cs if not (c.title or "").strip() and c.email not in picked][:_seats() - len(chosen)]
             if not chosen:
                 continue
             a = list(angles)[int(hashlib.sha256(f"wave1:{dom}".encode()).hexdigest(), 16) % len(angles)]
@@ -501,10 +534,9 @@ def fill(post: bool = True) -> dict:
                 break
             # The OpenRouter account is SHARED with other clients, and copy falls back to it when Concentrate answers 402. A big fill
             # must not drain it (Emmanuel, 2026-10-09: balance was $44 against a fill that could cost about $40).
-            enough, left = _openrouter_ok()
+            enough, why = _llm_ready()
             if not enough:
-                paused_note = (f"Paused: the shared OpenRouter balance is ${left:,.2f}, under the ${_min_openrouter():,.0f} floor. "
-                               f"Top it up, or fix the Concentrate 402, and the next 2-hourly tick continues.")
+                paused_note = f"Paused: {why}. The next 2-hourly tick continues."
                 db.log(run_id, "wave1_fill", paused_note)
                 break
             batch = []

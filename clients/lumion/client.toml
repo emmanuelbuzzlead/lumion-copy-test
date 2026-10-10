@@ -31,7 +31,7 @@ recontact_days = 60
 
 # Owner and operator first, then admissions and enrollment leaders (titles.txt order). Spec first
 # run used 3 contacts per domain; raise to 5 for the scale run.
-contacts_per_company = 3
+contacts_per_company = 5
 verify_pool_per_company = 6
 title_strategy = "ordered"
 use_leadocean = true

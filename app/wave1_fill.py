@@ -467,8 +467,9 @@ def fill(post: bool = True) -> dict:
         with db.cursor() as cur:
             cur.execute("""SELECT c.email, c.first_name, c.last_name, c.title, c.company_domain, c.company_name,
                                   c.vertical
-                           FROM contacts c JOIN company_funnel f ON f.domain = c.company_domain
-                           WHERE (f.tier = 1 OR c.source = 'reuse_tier2')      -- + leads a stopped batch left behind
+                           FROM contacts c LEFT JOIN company_funnel f ON f.domain = c.company_domain
+                           -- f.domain IS NULL: contacts found for newly staged schools, which have no tier row yet (261 sat unused 2026-10-11)
+                           WHERE (f.tier = 1 OR f.domain IS NULL OR c.source = 'reuse_tier2')      -- + leads a stopped batch left behind
                              AND NOT coalesce(f.replied, false) AND c.status = 'verified'
                              AND c.eb_campaign_id IS NULL AND coalesce(c.first_name, '') <> ''
                              AND coalesce(c.personalization_1, '') = ''

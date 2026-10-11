@@ -116,6 +116,15 @@ def _beat(holder: str) -> None:
         cur.execute("UPDATE job_locks SET heartbeat_at=now() WHERE name=%s AND holder=%s", (LOCK, holder))
 
 
+def release_dead_lock() -> bool:
+    """Called once at web boot. This service is a single instance, so a booting process means whoever held the fill lock died with the
+    old container. Without this a redeploy left the lock held for STALE_MIN (90) minutes and the boot resume answered
+    'already_running' while nothing ran (Emmanuel, 2026-10-10)."""
+    with db.cursor() as cur:
+        cur.execute("DELETE FROM job_locks WHERE name=%s", (LOCK,))
+        return (cur.rowcount or 0) > 0
+
+
 def _release(holder: str) -> None:
     with db.cursor() as cur:
         cur.execute("DELETE FROM job_locks WHERE name=%s AND holder=%s", (LOCK, holder))

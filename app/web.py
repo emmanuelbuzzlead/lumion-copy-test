@@ -54,7 +54,12 @@ async def lifespan(_: FastAPI):
     # to run beside a live run, so this can never double up on the cron.
     def _resume_on_boot() -> None:
         try:
-            from . import runner
+            from . import runner, wave1_fill
+            try:
+                if wave1_fill.release_dead_lock():
+                    print("[startup] released the fill lock left by the previous container", flush=True)
+            except Exception as exc:
+                print(f"[startup] lock release skipped: {exc}", flush=True)
             out = runner.resume()
             print(f"[startup] resume: {out.get('status')}", flush=True)
         except Exception as exc:

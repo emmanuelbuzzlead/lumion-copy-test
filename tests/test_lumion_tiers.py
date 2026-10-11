@@ -183,10 +183,10 @@ def test_the_fill_never_attaches_senders_when_the_flag_is_on():
     assert "if settings.skip_sender_attach:" in src and src.index("if settings.skip_sender_attach:") < src.index("assign_senders(campaign_of, end, run_id)")
 
 
-def test_the_fill_target_is_400_per_angle():
+def test_the_fill_target_is_1000_per_angle():
     import tomllib
     cfg = tomllib.loads((ROOT / "clients" / "lumion" / "copy_test.toml").read_text(encoding="utf-8"))
-    assert cfg["fill"]["target"] == 400
+    assert cfg["fill"]["target"] == 1000
 
 
 # --------------------------------------------------------------------------- multi-page signal reading

@@ -23,6 +23,8 @@ from .clients import emailbison, slack
 from .config import settings
 
 TIER2_VERTICAL = "Tier 2 - previously emailed"
+PERSONAL_DOMAINS = {'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com', 'icloud.com', 'msn.com', 'live.com', 'comcast.net',
+                    'att.net', 'sbcglobal.net', 'me.com', 'protonmail.com', 'ymail.com', 'verizon.net', 'bellsouth.net', 'mail.com', 'gmx.com'}
 LOCK = "wave1_fill"
 BATCH = int(os.getenv("WAVE1_BATCH", "600"))
 FIT_WORKERS = int(os.getenv("WAVE1_FIT_WORKERS", "10"))
@@ -390,7 +392,7 @@ def assign_senders(campaign_of: dict, leads: dict, run_id: str | None = None, dr
 def fill(post: bool = True) -> dict:
     """One resumable pass. Returns a summary; safe to call as often as you like."""
     from .stages import s5_copy
-    from .stages.s4_people import select_contacts
+    from .stages.s4_people import score_title
     from .clients.quickenrich import Contact
 
     s = _setup()
@@ -499,17 +501,25 @@ def fill(post: bool = True) -> dict:
             # correct today and self-widening: tiers 4/5 (62-89 and 3-54 days -- genuinely
             # NOT yet past the window) join automatically as they age past it, with no
             # further code change and no risk of recontacting someone too soon.
+            # Emmanuel, 2026-10-11: "the only criteria is we've not reached out to them in the past 60 days." Each PERSON's own last-touch date
+            # decides (EmailBison campaign date), not the company's: the company clock hid 2,555 people whose coworker was emailed recently.
+            # Fit checks are off for these (he said so) and there is no title filter; titles only rank who gets the 5 seats. Kept on
+            # purpose: company-level reply suppression, bounced people, 'Company team' placeholder first names, people already loaded,
+            # and personal-email addresses (their domain is gmail.com, so research would read the wrong site).
             cur.execute("""SELECT DISTINCT ON (h.email) h.email, h.first_name, h.last_name, h.title,
                                   h.company, h.company_domain
-                           FROM history_leads h JOIN company_funnel f ON f.domain = h.company_domain
-                           WHERE f.tier != 1 AND coalesce(f.days_since_contact, 0) >= %s
-                             AND NOT coalesce(f.replied, false)
-                             AND coalesce(f.fit, '') NOT IN ('LOW', 'NOT_FIT')
-                             AND coalesce(h.first_name, '') <> ''
-                             AND NOT EXISTS (SELECT 1 FROM contacts c WHERE c.email = h.email)
-                             AND NOT EXISTS (SELECT 1 FROM history_replies r
-                                             WHERE r.email = h.email AND r.bounced_at IS NOT NULL)""",
-                        (recontact_days,))
+                           FROM history_leads h
+                           JOIN (SELECT lower(email) e, max(campaign_date) d FROM recent_contacts GROUP BY 1) lc ON lc.e = lower(h.email)
+                           WHERE lc.d < current_date - %s::int
+                             AND coalesce(h.first_name, '') <> '' AND h.first_name NOT ILIKE '%% team'
+                             AND coalesce(h.company_domain, '') <> '' AND NOT (h.company_domain = ANY(%s))
+                             AND NOT EXISTS (SELECT 1 FROM contacts c WHERE lower(c.email) = lower(h.email))
+                             AND NOT EXISTS (SELECT 1 FROM history_replies r WHERE lower(r.email) = lower(h.email)
+                                             AND (r.replied_at IS NOT NULL OR r.bounced_at IS NOT NULL))
+                             AND NOT EXISTS (SELECT 1 FROM history_replies r2 WHERE r2.company_domain = h.company_domain
+                                             AND r2.replied_at IS NOT NULL)
+                             AND NOT EXISTS (SELECT 1 FROM company_funnel f WHERE f.domain = h.company_domain AND coalesce(f.replied, false))""",
+                        (recontact_days, list(PERSONAL_DOMAINS)))
             people = [dict(r) for r in cur.fetchall()]
         by_dom = defaultdict(list)
         for p in people:
@@ -518,14 +528,7 @@ def fill(post: bool = True) -> dict:
             cs = [Contact(first_name=p["first_name"], last_name=p["last_name"] or "", email=p["email"],
                           title=p["title"], linkedin_url=None, company=p["company"], company_domain=dom)
                   for p in by_dom[dom]]
-            chosen = select_contacts(cs, None, limit=_seats())
-            # Troy, 2026-09-27: 13,943 of 15,919 tier-2 people have NO title in the EmailBison
-            # copy, and the title filter drops blanks -- which emptied the queue at ~400. We
-            # emailed these people from this workspace before, so a blank title is allowed.
-            # Title matches go first; a title the filter rejects stays out.
-            if len(chosen) < 3:
-                picked = {c.email for c in chosen}
-                chosen += [c for c in cs if not (c.title or "").strip() and c.email not in picked][:_seats() - len(chosen)]
+            chosen = sorted(cs, key=lambda c: -score_title(c.title, None))[:_seats()]   # best titles get the seats; none are dropped
             if not chosen:
                 continue
             a = list(angles)[int(hashlib.sha256(f"wave1:{dom}".encode()).hexdigest(), 16) % len(angles)]

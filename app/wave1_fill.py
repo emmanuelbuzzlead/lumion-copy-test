@@ -80,7 +80,7 @@ def _llm_ready() -> tuple[bool, str]:
         return True, ""
     try:
         from .clients import llm
-        _t, provider, _m = llm.complete_meta("anthropic/claude-sonnet-4-6", "You write one short sentence.",
+        _t, provider, _m = llm.complete_meta("anthropic/claude-haiku-4.5", "You write one short sentence.",
                                              "Write a sentence about welding school. " * 60, 0.2, max_tokens=1500, provider="copy")
     except Exception as exc:
         return False, f"no LLM provider answered a real-size copy call ({str(exc)[:120]}). Top up Concentrate or OpenRouter"

@@ -1,6 +1,6 @@
 SOURCE: LUMION-SPEC.md section 5 and 6.5 (angle: Next Start Date), written 2026-10-08. Email 2 for this angle, 550 to 699 characters.
 VARIANT: next-start-date
-model: anthropic/claude-sonnet-4-6
+model: anthropic/claude-haiku-4.5
 temperature: 0.7
 max_tokens: 900
 SYSTEM PROMPT (verbatim):

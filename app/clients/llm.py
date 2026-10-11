@@ -342,6 +342,11 @@ def _openrouter(model: str, system: str, user: str, temperature: float,
                          {"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]},
                      {"role": "user", "content": user}],
     }
+    if model.startswith("openai/gpt-oss"):
+        # A reasoning model: its hidden thinking is billed and counted against max_tokens, so a 1,400-token cap can leave the visible brief
+        # empty. Low effort and a floor keep the brief whole (not yet measured live: OpenRouter was out of credit on 2026-10-11).
+        body["reasoning"] = {"effort": "low"}
+        max_tokens = max(max_tokens or 0, 4000)
     if max_tokens:
         body["max_tokens"] = max_tokens
     try:

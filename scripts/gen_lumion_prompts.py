@@ -12,8 +12,8 @@ from __future__ import annotations
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent.parent / "clients" / "lumion" / "prompts"
-RESEARCH_MODEL = "anthropic/claude-haiku-4.5"   # measured 2026-10-11: 24 pairs, same pass rate, blind judge 10-10, brief cost 57% lower
-EMAIL_MODEL = "anthropic/claude-sonnet-4-6"
+RESEARCH_MODEL = "openai/gpt-oss-120b"   # research: OpenRouter first, Haiku 4.5 via Concentrate as the built-in fallback (Emmanuel, 2026-10-11)
+EMAIL_MODEL = "anthropic/claude-haiku-4.5"   # emails: Haiku 4.5 (Emmanuel, 2026-10-11)
 
 GUARDRAIL = """HARD CONSTRAINTS:
 - Output ONLY the email body. No subject, greeting, name, signature, commentary, code fences,

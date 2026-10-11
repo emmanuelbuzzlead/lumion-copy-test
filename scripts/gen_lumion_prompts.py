@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent.parent / "clients" / "lumion" / "prompts"
-RESEARCH_MODEL = "anthropic/claude-sonnet-4-6"
+RESEARCH_MODEL = "anthropic/claude-haiku-4.5"   # measured 2026-10-11: 24 pairs, same pass rate, blind judge 10-10, brief cost 57% lower
 EMAIL_MODEL = "anthropic/claude-sonnet-4-6"
 
 GUARDRAIL = """HARD CONSTRAINTS:

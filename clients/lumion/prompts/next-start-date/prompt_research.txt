@@ -1,6 +1,6 @@
 SOURCE: LUMION-SPEC.md section 5 and 6.5 (angle: Next Start Date), written 2026-10-08. The research brief for this angle. It extracts the one signal this angle needs and picks the similar school.
 VARIANT: next-start-date
-model: anthropic/claude-sonnet-4-6
+model: anthropic/claude-haiku-4.5
 temperature: 0.3
 max_tokens: 1400
 SYSTEM PROMPT (verbatim):

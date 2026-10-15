@@ -279,3 +279,17 @@ def test_buzzlead_llm_is_first_on_copy_and_research(monkeypatch):
     monkeypatch.setattr(llm, "_has", lambda p: p in ("buzzlead", "concentrate"))
     llm._down_until.clear()
     assert llm.complete_meta("anthropic/claude-haiku-4.5", "s", "u", 0.2, 50, provider="copy")[1] == "concentrate"
+
+
+def test_countries_default_to_us_and_is_us_follows_the_profile(monkeypatch):
+    import dataclasses
+    from app import client
+    from app.clients import quickenrich
+    base = client.profile()
+    assert base.countries == ("US",)
+    ca = quickenrich.Contact(first_name="A", last_name="B", email="a@b.ca", title="Owner", linkedin_url=None, company="X",
+                             company_domain="b.ca", country_code="CA")
+    assert quickenrich.is_us(ca) is False
+    both = dataclasses.replace(base, countries=("US", "CA"))
+    monkeypatch.setattr(client, "profile", lambda: both)
+    assert quickenrich.is_us(ca) is True

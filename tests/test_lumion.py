@@ -314,3 +314,26 @@ def test_fit_screen_only_rejects_and_the_full_model_confirms(monkeypatch):
     assert company_fit._judge("a.com", "reject me", "", "sys")["reason"].startswith("screen:") and calls == ["screen"]
     calls.clear()
     assert company_fit._judge("b.com", "fine", "", "sys")["fit"] == "MEDIUM" and calls == ["screen", "precopy"]
+
+
+def test_fit_screen_only_never_calls_the_full_model(monkeypatch):
+    import dataclasses
+    import pytest
+    from app import client, company_fit
+    from app.clients import llm
+    from app.stages import s5_copy
+    monkeypatch.setattr(s5_copy, "_site_or_fallback", lambda d, n: "site text")
+    prof = dataclasses.replace(client.profile(), fit_screen_model="openai/gpt-oss-120b", fit_screen_only=True)
+    monkeypatch.setattr(client, "profile", lambda: prof)
+    calls = []
+
+    def fake(model, system, user, temp, max_tokens=None, provider=None):
+        calls.append(provider)
+        return {"fit": "HIGH", "reason": "plant", "vertical": "x"}
+    monkeypatch.setattr(llm, "complete_json", fake)
+    assert company_fit._judge("a.com", "n", "", "sys")["fit"] == "HIGH" and calls == ["screen"]
+    def boom(*a, **k):
+        raise llm.LLMUnavailable("down")
+    monkeypatch.setattr(llm, "complete_json", boom)
+    with pytest.raises(Exception):
+        company_fit._judge("b.com", "n", "", "sys")

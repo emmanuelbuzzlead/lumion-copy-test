@@ -267,3 +267,15 @@ def test_llm_ready_follows_the_real_chain(monkeypatch):
 def test_five_contacts_per_company():
     from app import client, wave1_fill
     assert client.profile().contacts_per_company == 5 and wave1_fill._seats() == 5
+
+
+def test_buzzlead_llm_is_first_on_copy_and_research(monkeypatch):
+    from app.clients import llm
+    assert llm.CHAINS["copy"][0] == "buzzlead" and llm.CHAINS["research"][0] == "buzzlead"
+    assert llm.CHAINS["copy"][1:] == ["concentrate", "openrouter"] and llm.CHAINS["research"][1:] == ["openrouter", "concentrate"]
+    assert llm.buzzlead_slug("anthropic/claude-haiku-4.5") == "claude-haiku-4-5" and llm.buzzlead_slug("openai/gpt-oss-120b") == "gpt-oss-120b"
+    monkeypatch.setattr(llm, "_buzzlead", lambda *a, **k: (_ for _ in ()).throw(llm.LLMUnavailable("402")))
+    monkeypatch.setattr(llm, "_concentrate", lambda *a, **k: "from concentrate")
+    monkeypatch.setattr(llm, "_has", lambda p: p in ("buzzlead", "concentrate"))
+    llm._down_until.clear()
+    assert llm.complete_meta("anthropic/claude-haiku-4.5", "s", "u", 0.2, 50, provider="copy")[1] == "concentrate"

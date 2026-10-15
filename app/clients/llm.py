@@ -400,12 +400,47 @@ CHAINS = {
     # substitutes with haiku at 27x the input price; the two email prompts are haiku
     # either way, so they go to Concentrate and the spend is split across both
     # accounts instead of draining one. Each keeps the other as fallback.
-    "research": ["openrouter", "concentrate"],
-    "copy": ["concentrate", "openrouter"],
+    # BuzzLead's own LLM gateway is FIRST on both, as in ProductEVO (8eb7c65): it carries claude-haiku-4-5 and gpt-oss-120b on BuzzLead's
+    # accounts, so neither the shared OpenRouter balance nor the shared Concentrate balance is touched while it answers. The old order stays
+    # behind it as the fallback. LLM_BUZZLEAD=false turns it off. Emmanuel, 2026-10-15.
+    "research": ["buzzlead", "openrouter", "concentrate"],
+    "copy": ["buzzlead", "concentrate", "openrouter"],
 }
 
 
+def buzzlead_slug(model: str) -> str:
+    """BuzzLead's bare model slug for one of our ids: 'anthropic/claude-haiku-4.5' -> 'claude-haiku-4-5'."""
+    bare = model.split("/", 1)[-1]
+    return bare.replace(".", "-") if bare.startswith("claude") else bare
+
+
+def _buzzlead(model: str, system: str, user: str, temperature: float,
+              max_tokens: int | None) -> str:
+    """BuzzLead's own LLM gateway (POST /llm/chat/completions): its provider waterfall serves the call on BuzzLead's accounts, billed to
+    the key. Any refusal or server error is an outage here, so the chain moves on to the next provider."""
+    base = (settings.buzzlead_base or "https://research-615339619342.us-east4.run.app").rstrip("/")
+    body: dict[str, Any] = {"model": buzzlead_slug(model), "temperature": temperature,
+                            "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+    if max_tokens:
+        body["max_tokens"] = max(max_tokens, 4000) if "gpt-oss" in model else max_tokens   # hidden reasoning counts against the cap
+    try:
+        data = request("buzzlead_llm", "POST", f"{base}/llm/chat/completions", json_body=body, headers={
+            "Authorization": f"Bearer {settings.buzzlead_api_key}", "Content-Type": "application/json"})
+    except VendorError as exc:
+        if exc.status is None or exc.status in (401, 402, 403, 429) or exc.status >= 500:
+            raise LLMUnavailable(f"BuzzLead LLM returned {exc.status}: {str(exc)[:120]}") from exc
+        raise
+    choices = (data or {}).get("choices") or []
+    text = ((choices[0].get("message") or {}).get("content") or "") if choices else ""
+    if not text:
+        raise LLMUnavailable(f"BuzzLead LLM returned no text: {str(data)[:200]}")
+    _record_usage(model, "buzzlead", (data or {}).get("usage") or {})
+    return text
+
+
 def _has(provider: str) -> bool:
+    if provider == "buzzlead":
+        return bool(settings.buzzlead_api_key) and os.getenv("LLM_BUZZLEAD", "true").strip().lower() != "false"
     if provider == "openrouter":
         return _use_openrouter()
     if provider == "anthropic":
@@ -457,6 +492,8 @@ def _model_label(provider: str, model: str) -> str:
         return f"openrouter/{model}"
     if provider == "gemini":
         return f"gemini/{GEMINI_MODEL}"
+    if provider == "buzzlead":
+        return f"buzzlead/{buzzlead_slug(model)}"
     return f"{provider}/{resolve_model(model)}"
 
 
@@ -476,7 +513,9 @@ def complete_meta(model: str, system: str, user: str, temperature: float,
     last: Exception | None = None
     for name in order:
         try:
-            if name == "openrouter":
+            if name == "buzzlead":
+                text = _buzzlead(model, system, user, temperature, max_tokens)
+            elif name == "openrouter":
                 text = _openrouter(model, system, user, temperature, max_tokens)
             elif name == "anthropic":
                 text = _anthropic(model, system, user, temperature, max_tokens)

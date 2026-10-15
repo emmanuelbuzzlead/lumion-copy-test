@@ -101,6 +101,9 @@ def main() -> int:
     rv = dest / "scripts" / "set_railway_vars.py"
     sub(rv, [("lumion-web", f"{name}-web"), ('"CLIENT": "lumion"', f'"CLIENT": "{name}"'), ("LUMION_EMAIL_BISON_API_KEY", a.key_env),
              ("lumion-web-production", f"{name}-web-production")])
+    conftest = dest / "tests" / "conftest.py"
+    if conftest.exists():
+        sub(conftest, [('setdefault("CLIENT", "lumion")', f'setdefault("CLIENT", "{name}")')])
     (new / "TODO.md").write_text(TODO.format(display=display), encoding="utf-8")
 
     print(f"Scaffolded {dest}")

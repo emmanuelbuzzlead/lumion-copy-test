@@ -293,3 +293,24 @@ def test_countries_default_to_us_and_is_us_follows_the_profile(monkeypatch):
     both = dataclasses.replace(base, countries=("US", "CA"))
     monkeypatch.setattr(client, "profile", lambda: both)
     assert quickenrich.is_us(ca) is True
+
+
+def test_fit_screen_only_rejects_and_the_full_model_confirms(monkeypatch):
+    import dataclasses
+    from app import client, company_fit
+    from app.clients import llm
+    from app.stages import s5_copy
+    monkeypatch.setattr(s5_copy, "_site_or_fallback", lambda d, n: "site text")
+    prof = dataclasses.replace(client.profile(), fit_screen_model="openai/gpt-oss-120b")
+    monkeypatch.setattr(client, "profile", lambda: prof)
+    calls = []
+
+    def fake(model, system, user, temp, max_tokens=None, provider=None):
+        calls.append(provider)
+        if provider == "screen":
+            return {"fit": "NOT_FIT", "reason": "software", "vertical": "none"} if "reject" in user else {"fit": "HIGH", "reason": "plant", "vertical": "x"}
+        return {"fit": "MEDIUM", "reason": "confirmed", "vertical": "x"}
+    monkeypatch.setattr(llm, "complete_json", fake)
+    assert company_fit._judge("a.com", "reject me", "", "sys")["reason"].startswith("screen:") and calls == ["screen"]
+    calls.clear()
+    assert company_fit._judge("b.com", "fine", "", "sys")["fit"] == "MEDIUM" and calls == ["screen", "precopy"]

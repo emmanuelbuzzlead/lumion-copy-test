@@ -19,8 +19,9 @@ points (approved and forbidden), copy length windows, the client's hard rules, S
    (check no value has a trailing space). Safe defaults: `PIPELINE_ENABLED=false`, `AUTO_START_CAMPAIGNS=false`, `SKIP_SENDER_ATTACH=true`, `POOL_REFILL_ENABLED=false`.
    Container filesystem resets on every deploy: `mkdir -p /app/logs` before writing logs. Redeploy kills a run in flight.
 4. Slack app from a manifest with a unique slash command, bot invited to the channel, signed test POST.
-5. History: `collect_*_history.py` (send log, newest first, paginate campaigns) then `build_*_history.py`, then `funnel_dedupe.py`, `history_backfill2.py`,
-   `add_history_to_funnel.py`, `tier_counts.py`. This fills `history_leads`, `history_replies`, `recent_contacts` and the tier table `company_funnel`.
+5. History, IN THIS ORDER (run in the container, they use the app's EmailBison client so they work for any client): `lumion_recent_contacts.py --all` (recent_contacts),
+   `sync_history_leads.py` (history_leads), then `funnel.refresh(force=True)` (creates company_funnel and the tiers), THEN `reply_backfill.py` (history_replies, needs company_funnel
+   to exist, it crashes otherwise), then `funnel.refresh(force=True)` again so replied companies are suppressed. TFP's 20 campaigns took about 10 minutes.
 6. Campaigns: duplicate the model campaign once per angle, register in `copy_test_campaigns`, keep as DRAFT, no senders. Proof run 15 leads each, read the sample with
    the client, then raise the target and switch on.
 

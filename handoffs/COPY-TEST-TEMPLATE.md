@@ -46,3 +46,16 @@ No detach endpoint in EmailBison: a wrong lead is permanent, so fit-check new co
 ## 5. Per-client hard rules go in copy_rules.toml and preflight
 Example (TFP): fit-check every company first, never push Mimecast or Barracuda (MX based), COMPANY at most 3 words, MATERIALS_HAULED at most 5 words, forbidden proof point
 INEOS Composites. These override any shortcut above.
+
+## 6. Defaults for EVERY new copy test: the IDPR and ProductEVO structure (Emmanuel, 2026-10-16)
+Measured on TFP: 178 s per contact and 173 leads an hour with the wrong shape, 372 an hour after the first fixes. IDPR's shape is the target, so it is the default.
+1. Copy: a global limit of 48 model calls in flight (`LLM_MAX_CONCURRENCY=48`) and 32 or more copy workers (`COPY_WORKERS=32`). Two routes rotated for emails (`LLM_COPY_CHAIN`, `LLM_COPY_ROTATE=true`).
+   The BuzzLead gateway adds a fixed 9 to 12 s per call whatever the prompt size; OpenRouter is 2 to 5 s. Concurrency, not the single call, is what makes IDPR fast.
+2. Calls per contact: aim for 2. Email caps wide enough that nobody is held over a few characters (TFP: 550 and 700), a target length stated BELOW the cap, a shorten-only retry, and at most 3 attempts.
+3. No SKIP rule that discards contacts. A contact is held only for a rule that protects the account (gateway block, DNC, wrong company named).
+4. Research: IDPR's light inputs by default (`research_inputs = "serper"`: news, one search, one home page grab). Heavy inputs (`jina_news`, Google searches) only when the angles need facts a general
+   report cannot give, and then only the pages and searches those angles use.
+5. Order: companies, contacts, website fit check on the companies that HAVE contacts (`fit_before_verify`), then email verification, then copy. The fit judge is gpt-oss (`fit_screen_only`).
+6. Copy and contact finding run side by side (producer and consumer, `app/testrun.py`), and the /runway page plus the Slack `runway` action show leads, contacts, companies and runway in plain words.
+7. Before any push above 100 leads: a 50-contact end-to-end rehearsal with a timing printout (see the profiling script in the TFP session) and a check that the bank, the fill queue and the tier labels agree.
+8. Sending: launching a campaign and attaching senders are separate, explicit steps, never part of a fill.

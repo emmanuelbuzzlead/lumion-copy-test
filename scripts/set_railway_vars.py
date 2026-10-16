@@ -40,7 +40,9 @@ FIXED = {
     "BUZZLEAD_ENABLED": "false",
     "AUTO_START_CAMPAIGNS": "false",
     "SKIP_SENDER_ATTACH": "true",
-    "POOL_REFILL_ENABLED": "false",   # new-company sourcing deferred until asked for
+    "POOL_REFILL_ENABLED": "false",
+    "COPY_WORKERS": "32",              # IDPR shape: many calls in flight, few per contact (COPY-TEST-TEMPLATE.md section 6)
+    "LLM_MAX_CONCURRENCY": "48",   # new-company sourcing deferred until asked for
 }
 
 
